@@ -44,7 +44,8 @@ def test_cross_page_count_consistency(db):
 
     assert overview["total_customers"] == db_customers, f"Overview customers {overview['total_customers']} != DB {db_customers}"
     assert overview["total_events"] == db_events, f"Overview events {overview['total_events']} != DB {db_events}"
-    assert overview["total_orders"] >= db_customers, "Total orders must be at least total customer count"
+    expected_orders = sum(o[0] or 0 for o in db_orders)
+    assert overview["total_orders"] == expected_orders, f"Overview orders {overview['total_orders']} != DB orders sum {expected_orders}"
 
 
 def test_orders_and_spend_invariant(db):
