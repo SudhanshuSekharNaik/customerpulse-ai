@@ -1,0 +1,70 @@
+# ==============================
+# Python Artifacts & Virtualenvs
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==============================
+# Testing & Type Checking
+# ==============================
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ==============================
+# Node & Frontend Build Artifacts
+# ==============================
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist-ssr/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==============================
+# Environment & Database Files
+# ==============================
+.env
+.env.local
+.env.*.local
+*.db
+*.sqlite3
+!data/*.csv
+data/uploads/
+
+# ==============================
+# OS & Editor Specific Files
+# ==============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log

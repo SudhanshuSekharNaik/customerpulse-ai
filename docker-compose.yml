@@ -1,0 +1,30 @@
+version: "3.9"
+
+# Starter compose file — only Postgres is wired up so far.
+# Add backend/frontend/mlflow/prefect services as those build phases land.
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-customerpulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-customerpulse}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # backend:
+  #   build: ./backend
+  #   env_file: .env
+  #   depends_on: [postgres]
+  #   ports: ["8000:8000"]
+
+  # frontend:
+  #   build: ./frontend
+  #   ports: ["3000:3000"]
+
+volumes:
+  pgdata:

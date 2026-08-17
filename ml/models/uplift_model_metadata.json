@@ -1,0 +1,92 @@
+{
+  "selected_model": "TWO_MODEL",
+  "randomization_assumption": "Treatment was randomly assigned in Criteo benchmark trial (Unconfoundedness ATE / CATE identification holds).",
+  "qini_score": 0.7007,
+  "auuc": 331.88,
+  "baseline_two_model_qini": 0.7007,
+  "x_learner_qini": 0.65,
+  "deciles": [
+    {
+      "decile": 1,
+      "population_fraction": 0.1,
+      "treated_conversion_rate": 0.1967,
+      "control_conversion_rate": 0.0981,
+      "estimated_uplift": 0.0986,
+      "cumulative_qini": 135.9
+    },
+    {
+      "decile": 2,
+      "population_fraction": 0.2,
+      "treated_conversion_rate": 0.193,
+      "control_conversion_rate": 0.1,
+      "estimated_uplift": 0.093,
+      "cumulative_qini": 260.23
+    },
+    {
+      "decile": 3,
+      "population_fraction": 0.3,
+      "treated_conversion_rate": 0.1685,
+      "control_conversion_rate": 0.1181,
+      "estimated_uplift": 0.0504,
+      "cumulative_qini": 302.95
+    },
+    {
+      "decile": 4,
+      "population_fraction": 0.4,
+      "treated_conversion_rate": 0.146,
+      "control_conversion_rate": 0.0664,
+      "estimated_uplift": 0.0796,
+      "cumulative_qini": 405.31
+    },
+    {
+      "decile": 5,
+      "population_fraction": 0.5,
+      "treated_conversion_rate": 0.1033,
+      "control_conversion_rate": 0.1085,
+      "estimated_uplift": -0.0052,
+      "cumulative_qini": 410.06
+    },
+    {
+      "decile": 6,
+      "population_fraction": 0.6,
+      "treated_conversion_rate": 0.0881,
+      "control_conversion_rate": 0.0637,
+      "estimated_uplift": 0.0243,
+      "cumulative_qini": 430.84
+    },
+    {
+      "decile": 7,
+      "population_fraction": 0.7,
+      "treated_conversion_rate": 0.069,
+      "control_conversion_rate": 0.1022,
+      "estimated_uplift": -0.0332,
+      "cumulative_qini": 390.59
+    },
+    {
+      "decile": 8,
+      "population_fraction": 0.8,
+      "treated_conversion_rate": 0.0482,
+      "control_conversion_rate": 0.0467,
+      "estimated_uplift": 0.0015,
+      "cumulative_qini": 396.83
+    },
+    {
+      "decile": 9,
+      "population_fraction": 0.9,
+      "treated_conversion_rate": 0.0483,
+      "control_conversion_rate": 0.0508,
+      "estimated_uplift": -0.0026,
+      "cumulative_qini": 390.92
+    },
+    {
+      "decile": 10,
+      "population_fraction": 1.0,
+      "treated_conversion_rate": 0.0653,
+      "control_conversion_rate": 0.0655,
+      "estimated_uplift": -0.0002,
+      "cumulative_qini": 390.28
+    }
+  ],
+  "dataset_hash": "afaffc3c72b07d16",
+  "row_count": 50000
+}
