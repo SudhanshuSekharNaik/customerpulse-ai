@@ -1,8 +1,45 @@
 {
-  "optimal_threshold": 0.18,
+  "optimal_threshold": 0.5549999999999999,
   "is_calibrated": true,
   "cost_ratio": "5:1",
-  "pr_auc": 0.5454020407294762,
-  "roc_auc": 0.7686683140066374,
-  "f1_score": 0.5714285714285714
+  "pr_auc": 0.744728578065581,
+  "roc_auc": 0.6410279672630668,
+  "f1_score": 0.41539401343921806,
+  "precision": 0.9066666666666666,
+  "recall": 0.2694136291600634,
+  "brier_score": 0.3873724595306227,
+  "baseline_lr_pr_auc": 0.7901193226353183,
+  "baseline_lr_roc_auc": 0.71321650321168,
+  "hyperparameters": {
+    "n_estimators": 115,
+    "max_depth": 4,
+    "num_leaves": 44,
+    "learning_rate": 0.01518747922672247,
+    "min_child_samples": 21,
+    "subsample": 0.7465447373174767,
+    "colsample_bytree": 0.7824279936868144,
+    "reg_alpha": 1.382623217936987,
+    "reg_lambda": 0.006290644294586149,
+    "scale_pos_weight": 6.373702422145329,
+    "random_state": 42,
+    "verbose": -1,
+    "n_jobs": -1
+  },
+  "class_balance": {
+    "train_positive_rate": 0.1356170811825434,
+    "val_positive_rate": 0.15207581227436823,
+    "test_positive_rate": 0.5494122768828907
+  },
+  "confusion_matrix": [
+    [
+      1000,
+      35
+    ],
+    [
+      922,
+      340
+    ]
+  ],
+  "dataset_hash": "0987c0595cc3a37b",
+  "row_count": 6644
 }

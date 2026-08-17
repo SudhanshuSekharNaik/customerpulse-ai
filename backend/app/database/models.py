@@ -182,7 +182,7 @@ class Prediction(Base):
     model_type = Column(String(32), index=True, nullable=False)  # churn, next_event
     model_version = Column(String(32), default="v1.0")
     predicted_class = Column(String(64), nullable=False)
-    predicted_probability = Column(Float, nullable=False)
+    predicted_probability = Column(Float, nullable=True)
     pr_auc_at_eval = Column(Float, nullable=True)
     decision_threshold = Column(Float, default=0.5)
     shap_values_json = Column(Text, nullable=True)  # JSON string of feature importance
