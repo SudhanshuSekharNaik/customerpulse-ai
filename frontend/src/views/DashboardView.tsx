@@ -307,43 +307,61 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* E-Commerce Funnel & Cart Abandonment Summary */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Cart Abandonment Rate</span>
-                  <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#F87171" }}>
-                    {traffic.ecommerce_funnel.cart_abandonment_rate_pct}%
-                  </span>
+            {traffic.ecommerce_funnel.has_funnel_events && traffic.ecommerce_funnel.cart_abandonment_rate_pct !== null ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Cart Abandonment Rate</span>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#F87171" }}>
+                      {traffic.ecommerce_funnel.cart_abandonment_rate_pct}%
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                    ₹{traffic.ecommerce_funnel.recovered_cart_revenue_potential_inr?.toLocaleString() || 0} Recoverable Cart Value
+                  </div>
                 </div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                  ₹{traffic.ecommerce_funnel.recovered_cart_revenue_potential_inr.toLocaleString()} Recoverable Cart Value
-                </div>
-              </div>
 
-              <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Cart-to-View Ratio</span>
-                  <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-cyan)" }}>
-                    {traffic.ecommerce_funnel.cart_to_view_ratio_pct}%
-                  </span>
+                <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Cart-to-View Ratio</span>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-cyan)" }}>
+                      {traffic.ecommerce_funnel.cart_to_view_ratio_pct}%
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                    {traffic.ecommerce_funnel.carts?.toLocaleString() || 0} Items Added to Cart
+                  </div>
                 </div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                  {traffic.ecommerce_funnel.carts.toLocaleString()} Items Added to Cart
-                </div>
-              </div>
 
-              <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)" }}>Checkout Conversion</span>
-                  <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#34D399" }}>
-                    {traffic.ecommerce_funnel.checkout_conversion_rate_pct}%
-                  </span>
-                </div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                  {traffic.ecommerce_funnel.purchases.toLocaleString()} Completed Purchases
+                <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)" }}>Checkout Conversion</span>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#34D399" }}>
+                      {traffic.ecommerce_funnel.checkout_conversion_rate_pct}%
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                    {traffic.ecommerce_funnel.purchases?.toLocaleString() || 0} Completed Purchases
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "16px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)", height: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--accent-cyan)", marginBottom: "6px" }}>
+                  <Info size={16} />
+                  <span style={{ fontSize: "0.82rem", fontWeight: 700 }}>E-Commerce Funnel</span>
+                </div>
+                <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
+                  Not enough data — this file only has completed orders
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
+                  Cart abandonment and checkout drop-off require page-view and add-to-cart events.
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "var(--accent-emerald)", marginTop: "8px", fontWeight: 600 }}>
+                  {traffic.ecommerce_funnel.purchases?.toLocaleString() || 0} Completed Purchases Recorded
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Category Surge Radar Chips */}
@@ -396,10 +414,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <div>
               <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF" }}>
-                Customer Lifecycle State Distribution (9 States)
+                9 customer stages, based on real activity from your data
               </h3>
               <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                Deterministic state classification based on 7d/30d/90d behavioral features
+                How your customers are split between new, active, and at-risk stages
               </p>
             </div>
             <button
@@ -407,7 +425,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               style={{ fontSize: "0.75rem", padding: "4px 8px" }}
               onClick={() => onNavigateTab("states")}
             >
-              Transition Matrix <ArrowRight size={12} />
+              How customers move <ArrowRight size={12} />
             </button>
           </div>
 

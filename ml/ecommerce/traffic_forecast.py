@@ -124,15 +124,19 @@ class EcommerceTrafficEngine:
             cart_to_view_rate = min(100.0, max(0.0, round((carts / max(1, views)) * 100.0, 2)))
             checkout_conv_rate = min(100.0, max(0.0, round((purchases / max(1, views)) * 100.0, 2)))
             recovered_rev = round(float(df["revenue"].sum() * (cart_abandon_rate / 100.0) * 0.20), 2) if "revenue" in df.columns else 0.0
+            has_funnel_events = True
+            funnel_note = None
         else:
-            # Verified transaction order stream
-            views = total_events
-            carts = total_events
-            purchases = total_events
-            cart_abandon_rate = 0.0
-            cart_to_view_rate = 100.0
-            checkout_conv_rate = 100.0
-            recovered_rev = 0.0
+            # Verified transaction order stream without view/cart events
+            views = None
+            carts = None
+            purchases = raw_purchases
+            cart_abandon_rate = None
+            cart_to_view_rate = None
+            checkout_conv_rate = None
+            recovered_rev = None
+            has_funnel_events = False
+            funnel_note = "Not enough data — this file only has completed orders"
 
         # 5. Category Surge Ranking
         cat_col = "category" if "category" in df.columns else "category_id" if "category_id" in df.columns else None
@@ -164,6 +168,8 @@ class EcommerceTrafficEngine:
                 "recommended_action": "Deploy flash sale banners & cart push notifications 30 mins before window.",
             },
             "ecommerce_funnel": {
+                "has_funnel_events": has_funnel_events,
+                "funnel_note": funnel_note,
                 "views": views,
                 "carts": carts,
                 "purchases": purchases,
@@ -222,6 +228,8 @@ class EcommerceTrafficEngine:
                 "recommended_action": "Deploy flash sale countdown banners & cart recovery push notifications.",
             },
             "ecommerce_funnel": {
+                "has_funnel_events": True,
+                "funnel_note": None,
                 "views": 113000,
                 "carts": 4500,
                 "purchases": 1900,

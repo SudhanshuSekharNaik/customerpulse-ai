@@ -32,18 +32,18 @@ export const ModelsView: React.FC = () => {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
       <div className="glass-card" style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Model Registry, MLOps &amp; Data Quality Audit
+              AI Models &amp; Data Quality Audit
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-              Cryptographic SHA-256 data lineage, automated drift monitoring, and hyperparameter tuning logs
+              Live, accurate customer data — nothing made up &middot; Full validation history
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "6px 12px", borderRadius: "8px", color: "var(--accent-emerald)", fontSize: "0.8rem", fontWeight: 700 }}>
             <CheckCircle2 size={16} />
-            <span>Data Quality: 100.0/100 (PASSED)</span>
+            <span>Data Quality: 100.0/100 (Passed)</span>
           </div>
         </div>
       </div>

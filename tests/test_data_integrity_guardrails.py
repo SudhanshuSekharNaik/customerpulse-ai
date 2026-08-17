@@ -58,14 +58,20 @@ def test_orders_and_spend_invariant(db):
 
 
 def test_percentage_range_sanity_clamps(db):
-    """Assert all percentages and rates are strictly bounded within [0.0, 100.0]."""
+    """Assert all percentages and rates are strictly bounded within [0.0, 100.0] or None when no funnel events."""
     traffic_res = EcommerceTrafficEngine.analyze_traffic_and_peaks(db=db)
     funnel = traffic_res["ecommerce_funnel"]
 
     # Checkout conversion, cart abandonment, cart-to-view
-    assert 0.0 <= funnel["checkout_conversion_rate_pct"] <= 100.0, f"Invalid conversion rate {funnel['checkout_conversion_rate_pct']}"
-    assert 0.0 <= funnel["cart_abandonment_rate_pct"] <= 100.0, f"Invalid abandonment rate {funnel['cart_abandonment_rate_pct']}"
-    assert 0.0 <= funnel["cart_to_view_ratio_pct"] <= 100.0, f"Invalid cart/view ratio {funnel['cart_to_view_ratio_pct']}"
+    if funnel.get("has_funnel_events", True):
+        assert 0.0 <= funnel["checkout_conversion_rate_pct"] <= 100.0, f"Invalid conversion rate {funnel['checkout_conversion_rate_pct']}"
+        assert 0.0 <= funnel["cart_abandonment_rate_pct"] <= 100.0, f"Invalid abandonment rate {funnel['cart_abandonment_rate_pct']}"
+        assert 0.0 <= funnel["cart_to_view_ratio_pct"] <= 100.0, f"Invalid cart/view ratio {funnel['cart_to_view_ratio_pct']}"
+    else:
+        assert funnel["cart_abandonment_rate_pct"] is None
+        assert funnel["cart_to_view_ratio_pct"] is None
+        assert funnel["checkout_conversion_rate_pct"] is None
+        assert "only has completed orders" in funnel.get("funnel_note", "")
 
     # Executive overview percentages
     overview = get_executive_overview(db=db)
@@ -151,9 +157,12 @@ def test_markov_transition_matrix_row_sum_invariant(db):
             assert abs(row_sum - 1.0) <= 0.01, f"State '{st}' with {cust_count} customers has row sum {row_sum} != 1.0 (row: {row})"
 
 
+from sqlalchemy import desc
+
+
 def test_pr_auc_alignment_with_model_run(db):
     """Predictions overview PR-AUC must match the latest ModelRun PR-AUC in database."""
-    latest_run = db.query(ModelRun).filter(ModelRun.model_type == "churn", ModelRun.status == "COMPLETED").first()
+    latest_run = db.query(ModelRun).filter(ModelRun.model_type == "churn", ModelRun.status == "COMPLETED").order_by(desc(ModelRun.train_timestamp)).first()
     if latest_run and latest_run.pr_auc is not None:
         ov = PredictionService.get_churn_predictions_overview(db=db)
         assert round(ov["pr_auc"], 4) == round(float(latest_run.pr_auc), 4), f"Overview PR-AUC {ov['pr_auc']} != ModelRun {latest_run.pr_auc}"

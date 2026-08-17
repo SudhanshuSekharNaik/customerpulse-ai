@@ -29,17 +29,17 @@ export const BehaviorView: React.FC<BehaviorViewProps> = ({ onSelectCustomer }) 
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
       <div className="glass-card" style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Behavior Change &amp; Anomaly Radar
+              Customer Behavior Changes &amp; Early Signals
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-              Continuous statistical monitoring: Z-score deviations (&gt;2.0), EWMA trend breaks, and Isolation Forest anomalies
+              Tracking sudden changes in customer activity, drop-offs, and unusual shopping patterns
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             {["", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((sev) => (
               <button
                 key={sev}
@@ -57,41 +57,41 @@ export const BehaviorView: React.FC<BehaviorViewProps> = ({ onSelectCustomer }) 
       {/* Opportunity Score Sub-Component Breakdown Card */}
       <div className="glass-card" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "6px" }}>
-          Composite Opportunity Score Formula (0 to 100)
+          Opportunity Score — how worth targeting this customer is
         </h3>
         <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "16px" }}>
-          Auditable scoring weighing account value, deterioration urgency, buying intent, campaign uplift, and time sensitivity
+          A continuous 0 to 100 score combining spend, urgency, engagement, and timing so your team knows exactly who to contact first
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>1. Value Component (25%)</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>1. Customer Value (25%)</div>
             <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-blue)" }}>Spend Tier</div>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Normalized revenue</div>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Lifetime spend &amp; orders</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>2. Deterioration (25%)</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>2. Urgency (25%)</div>
             <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#EF4444" }}>Churn Risk</div>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Risk &amp; trend drop</div>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Risk of losing the account</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>3. Intent (20%)</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-cyan)" }}>Cart/View Velocity</div>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>High purchase signals</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>3. Recent Interest (20%)</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-cyan)" }}>Cart &amp; Views</div>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Active shopping velocity</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>4. Responsiveness (15%)</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-emerald)" }}>Causal Uplift</div>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Persuadability tier</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-emerald)" }}>Campaign Lift</div>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Targeting persuadability</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>5. Time Sensitivity (15%)</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-amber)" }}>Recency Window</div>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Critical intervention gap</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>5. Timing Window (15%)</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent-amber)" }}>Recency</div>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Best intervention window</div>
           </div>
         </div>
       </div>

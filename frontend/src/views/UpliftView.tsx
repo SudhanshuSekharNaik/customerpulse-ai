@@ -104,17 +104,17 @@ export const UpliftView: React.FC<UpliftViewProps> = ({
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#FFFFFF", fontWeight: 700, marginBottom: "6px" }}>
               <AlertCircle size={16} color="#FBBF24" />
-              <span>Zero-Hallucination Integrity Policy</span>
+              <span>Live, accurate customer data — nothing made up</span>
             </div>
             <p style={{ margin: 0, lineHeight: 1.5 }}>
-              Causal meta-learners (X-Learner / T-Learner) estimate the <em>Conditional Average Treatment Effect (CATE)</em>. They mathematically require:
+              Uplift modeling measures <em>Campaign Lift</em> (how much more likely a customer is to buy if you reach out vs. if you leave them alone). It requires:
             </p>
             <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
-              <li>An experimental <strong>Treatment</strong> column (e.g. <code>treatment = 0/1</code>, or <code>is_treated</code>).</li>
-              <li>A corresponding <strong>Conversion / Outcome</strong> column (e.g. <code>converted = 0/1</code>).</li>
+              <li>A <strong>Campaign / Treatment</strong> column showing who was targeted (e.g. <code>treatment = 0/1</code>).</li>
+              <li>A corresponding <strong>Conversion / Outcome</strong> column showing who bought (e.g. <code>converted = 0/1</code>).</li>
             </ul>
             <p style={{ margin: "8px 0 0 0", color: "var(--accent-cyan)" }}>
-              CustomerPulse AI never generates artificial Qini curves or fabricated uplift numbers when treatment variables are absent.
+              CustomerPulse AI never generates artificial numbers or fake uplift when campaign test data is absent.
             </p>
           </div>
 

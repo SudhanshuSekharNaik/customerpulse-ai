@@ -124,7 +124,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               Customer 360 Explorer
             </h2>
             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {totalCount} Total Accounts &middot; Point-in-time leakage-safe feature store &amp; state audit
+              {totalCount} Total Accounts &middot; Live, accurate customer data — nothing made up
             </p>
           </div>
 
@@ -212,7 +212,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                     {c.customer_id}
                     {c.is_cold_start && (
                       <span style={{ marginLeft: "6px", fontSize: "0.68rem", background: "rgba(56, 189, 248, 0.2)", color: "#38BDF8", padding: "1px 4px", borderRadius: "3px" }}>
-                        Cold Start
+                        New
                       </span>
                     )}
                   </td>
@@ -224,12 +224,18 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <td>{c.total_orders}</td>
                   <td>{c.total_events}</td>
                   <td>
-                    <span style={{
-                      fontWeight: 700,
-                      color: (c.churn_probability || 0) > 0.6 ? "#EF4444" : (c.churn_probability || 0) > 0.3 ? "#F59E0B" : "#10B981"
-                    }}>
-                      {c.churn_probability !== undefined ? `${(c.churn_probability * 100).toFixed(1)}%` : "N/A"}
-                    </span>
+                    {c.is_cold_start || c.churn_probability === null || c.churn_probability === undefined ? (
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                        New customer
+                      </span>
+                    ) : (
+                      <span style={{
+                        fontWeight: 700,
+                        color: c.churn_probability > 0.6 ? "#EF4444" : c.churn_probability > 0.3 ? "#F59E0B" : "#10B981"
+                      }}>
+                        {(c.churn_probability * 100).toFixed(1)}%
+                      </span>
+                    )}
                   </td>
                   <td>
                     <span style={{ fontWeight: 600, color: "var(--accent-cyan)", fontFamily: "var(--font-mono)" }}>
@@ -282,7 +288,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 </div>
                 <div>
                   <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-                    Customer 360 Dossier: <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-cyan)" }}>{selectedCustomerId}</span>
+                    Customer 360: <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-cyan)" }}>{selectedCustomerId}</span>
                   </h3>
                   <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                     {customerDetail?.current_state && (
@@ -305,7 +311,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 
             {detailLoading ? (
               <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-                Loading customer features and predictions...
+                Loading customer profile...
               </div>
             ) : customerDetail ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -322,25 +328,55 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <div className="glass-card" style={{ padding: "12px 16px" }}>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Recency</div>
                     <div style={{ fontSize: "1.3rem", fontWeight: 700 }}>
-                      {customerDetail.features?.recency_days?.toFixed(1) || 0}d
+                      {customerDetail.features?.recency_days !== undefined ? `${customerDetail.features.recency_days.toFixed(1)}d` : "0d"}
                     </div>
                     <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Since last interaction</div>
                   </div>
 
                   <div className="glass-card" style={{ padding: "12px 16px" }}>
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Churn Probability</div>
-                    <div style={{ fontSize: "1.3rem", fontWeight: 700, color: (customerDetail.churn_prediction?.predicted_probability || 0) > 0.6 ? "#EF4444" : "#10B981" }}>
-                      {customerDetail.churn_prediction?.predicted_probability ? `${(customerDetail.churn_prediction.predicted_probability * 100).toFixed(1)}%` : "N/A"}
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Th: {customerDetail.churn_prediction?.decision_threshold || 0.76}</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Churn Risk</div>
+                    {customerDetail.is_cold_start || customerDetail.churn_prediction?.is_cold_start || customerDetail.churn_prediction?.predicted_probability === null || customerDetail.churn_prediction?.predicted_probability === undefined ? (
+                      <div>
+                        <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--accent-cyan)", marginTop: "4px" }}>
+                          New customer
+                        </div>
+                        <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                          Not enough history for a prediction yet
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: "1.3rem", fontWeight: 700, color: customerDetail.churn_prediction.predicted_probability > 0.6 ? "#EF4444" : "#10B981" }}>
+                          {(customerDetail.churn_prediction.predicted_probability * 100).toFixed(1)}%
+                        </div>
+                        <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>
+                          When to flag as at-risk: {(customerDetail.churn_prediction.decision_threshold * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="glass-card" style={{ padding: "12px 16px" }}>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Estimated Uplift</div>
-                    <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
-                      +{customerDetail.uplift_estimate?.estimated_uplift ? (customerDetail.uplift_estimate.estimated_uplift * 100).toFixed(1) : 0}%
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>Decile {customerDetail.uplift_estimate?.decile || "N/A"} (X-Learner)</div>
+                    {customerDetail.uplift_estimate?.is_available && customerDetail.uplift_estimate?.estimated_uplift !== null && customerDetail.uplift_estimate?.estimated_uplift !== undefined ? (
+                      <div>
+                        <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
+                          +{(customerDetail.uplift_estimate.estimated_uplift * 100).toFixed(1)}%
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)" }}>
+                          Decile {customerDetail.uplift_estimate.decile} (Top persuadables)
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)", marginTop: "4px" }}>
+                          Not available for this dataset
+                        </div>
+                        <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                          No campaign A/B test data in current file
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -349,13 +385,17 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   {/* SHAP Waterfall Breakdown */}
                   <div className="glass-card" style={{ padding: "16px" }}>
                     <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
-                      SHAP Feature Attribution (Why Churn Risk is High/Low)
+                      Why the model made this prediction
                     </h4>
                     <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "12px" }}>
-                      Log-odds contribution to churn risk from TreeSHAP explainer
+                      Factors pushing risk up (red) or down (green)
                     </p>
 
-                    {shapData.length > 0 ? (
+                    {customerDetail.is_cold_start || customerDetail.churn_prediction?.is_cold_start ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", padding: "30px 0", textAlign: "center" }}>
+                        New customer — waiting for more activity before analyzing risk factors.
+                      </div>
+                    ) : shapData.length > 0 ? (
                       <div style={{ height: "180px" }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={shapData} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }}>
@@ -372,7 +412,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                       </div>
                     ) : (
                       <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", padding: "20px 0" }}>
-                        Heuristic cold-start profile (Insufficient feature history for TreeSHAP).
+                        New customer — not enough history for risk factor breakdown yet.
                       </div>
                     )}
                   </div>

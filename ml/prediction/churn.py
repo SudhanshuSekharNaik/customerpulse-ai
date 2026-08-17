@@ -262,6 +262,7 @@ class ChurnPredictorTrainer:
 
         metadata = {
             "optimal_threshold": self.optimal_threshold,
+            "is_calibrated": True,
             "cost_ratio": "5:1",
             "pr_auc": test_pr_auc,
             "roc_auc": test_roc_auc,
@@ -299,18 +300,20 @@ class ChurnPredictorTrainer:
                 pr_auc=test_pr_auc,
                 roc_auc=test_roc_auc,
                 f1_score=test_f1,
+                status="COMPLETED",
             )
             db.add(model_run)
+            db.commit()
 
-            metrics = [
+            # Record model metrics
+            metrics_objs = [
                 ModelMetric(run_id=run_id, metric_name="pr_auc", metric_value=test_pr_auc, dataset_split="TEST"),
                 ModelMetric(run_id=run_id, metric_name="roc_auc", metric_value=test_roc_auc, dataset_split="TEST"),
                 ModelMetric(run_id=run_id, metric_name="f1_score", metric_value=test_f1, dataset_split="TEST"),
-                ModelMetric(run_id=run_id, metric_name="precision", metric_value=test_prec, dataset_split="TEST"),
-                ModelMetric(run_id=run_id, metric_name="recall", metric_value=test_rec, dataset_split="TEST"),
                 ModelMetric(run_id=run_id, metric_name="decision_threshold", metric_value=self.optimal_threshold, dataset_split="VAL"),
+                ModelMetric(run_id=run_id, metric_name="brier_score", metric_value=test_brier, dataset_split="TEST"),
             ]
-            db.add_all(metrics)
+            db.bulk_save_objects(metrics_objs)
             db.commit()
             print(f"Logged churn model run {run_id} to database.")
         except Exception as e:
@@ -323,9 +326,8 @@ class ChurnPredictorTrainer:
         return metadata
 
     def score_all_customers_and_save(self, features_df: pd.DataFrame):
-        """Generate predictions and real SHAP explanations for all active customers."""
-        if self.best_model is None or self.explainer is None:
-            # Try to load from disk
+        """Batch score all customer feature vectors with LightGBM and compute per-customer SHAP."""
+        if not self.best_model or not self.explainer:
             model_path = os.path.join(self.model_dir, "churn_lightgbm.joblib")
             explainer_path = os.path.join(self.model_dir, "churn_shap_explainer.joblib")
             if os.path.exists(model_path) and os.path.exists(explainer_path):
@@ -351,7 +353,6 @@ class ChurnPredictorTrainer:
                 
                 # Check cold start
                 if row.get("is_cold_start", False):
-                    cs_pred = ColdStartHandler.predict_cold_start(row)
                     pred_objs.append(
                         Prediction(
                             prediction_id=f"pred_churn_{pid_counter:08d}",
@@ -359,12 +360,12 @@ class ChurnPredictorTrainer:
                             model_type="churn",
                             model_version="v1.0_heuristic",
                             predicted_class="COLD_START_UNCERTAIN",
-                            predicted_probability=0.40,
+                            predicted_probability=None,
                             pr_auc_at_eval=None,
                             decision_threshold=self.optimal_threshold,
-                            shap_values_json=json.dumps({"cold_start_flag": 1.0, "insufficient_history": 1.0}),
-                            confidence_interval_low=0.20,
-                            confidence_interval_high=0.60,
+                            shap_values_json="{}",
+                            confidence_interval_low=None,
+                            confidence_interval_high=None,
                         )
                     )
                 else:

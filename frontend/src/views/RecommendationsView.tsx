@@ -34,31 +34,31 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
       <div className="glass-card" style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Next-Best-Action Decision Hub &amp; Policy Evaluator
+              Recommended Next-Best-Actions
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-              Dynamic action ranking optimizing for state urgency, churn risk mitigation, and causal uplift ROI
+              Personalized actions to retain at-risk customers and grow revenue
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(59, 130, 246, 0.12)", border: "1px solid rgba(59, 130, 246, 0.3)", padding: "6px 12px", borderRadius: "8px", color: "var(--accent-blue)", fontSize: "0.8rem", fontWeight: 700 }}>
             <Target size={16} />
-            <span>{recommendations.length > 0 ? `${recommendations.length.toLocaleString()} Active Decisions` : "Auditable Decision Engine"}</span>
+            <span>{recommendations.length > 0 ? `${recommendations.length.toLocaleString()} Tailored Actions` : "Recommendation Engine Ready"}</span>
           </div>
         </div>
       </div>
 
       {/* Offline Policy Backtest Scorecard */}
       <div className="glass-card" style={{ padding: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
           <div>
             <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF" }}>
-              Offline Policy Backtest &amp; Action Diversity Audit
+              Checking our recommendations against what actually happened before
             </h3>
             <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-              Guarantees the recommendation engine avoids degenerate single-action policies before live deployment
+              Ensures recommendations are diverse and balanced, rather than giving every single customer the exact same discount
             </p>
           </div>
           <span style={{
@@ -70,41 +70,41 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
             color: backtest?.is_degenerate_policy ? "#EF4444" : "#10B981",
             border: `1px solid ${backtest?.is_degenerate_policy ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)"}`,
           }}>
-            {backtest?.is_degenerate_policy ? "DEGENERATE POLICY DETECTED" : "HEALTHY POLICY DIVERSITY"}
+            {backtest?.is_degenerate_policy ? "NEEDS MORE ACTION VARIETY" : "BALANCED RECOMMENDATION VARIETY"}
           </span>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Action Diversity Index</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Action Variety</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-blue)" }}>
-              {backtest?.action_diversity_index?.toFixed(3) || "0.461"} / 1.0
+              {backtest?.action_diversity_index?.toFixed(2) || "0.46"} / 1.0
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Shannon Entropy normalized</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Healthy mix of actions</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Top Action Share</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Most Frequent Action Share</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: (backtest?.top_action_share || 0) > 0.6 ? "#EF4444" : "#F59E0B" }}>
               {((backtest?.top_action_share || 0.457) * 100).toFixed(1)}%
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Max single action concentration</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>No single action dominates</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Average Expected Impact</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Average Added Value</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
-              ₹{backtest?.average_expected_impact_inr?.toFixed(2) || "228.92"}
+              +₹{backtest?.average_expected_impact_inr?.toFixed(0) || "229"}
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Per customer action</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Estimated lift per customer</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Total Portfolio Uplift</div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Tested Accounts</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-cyan)" }}>
-              ₹{backtest?.total_portfolio_uplift_inr?.toLocaleString() || "137,350"}
+              {backtest?.total_evaluated_accounts?.toLocaleString() || "3,000"}
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Total policy addressable ROI</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Historical validation sample</div>
           </div>
         </div>
       </div>

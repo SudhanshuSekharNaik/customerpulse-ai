@@ -33,18 +33,18 @@ export const StatesView: React.FC = () => {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
       <div className="glass-card" style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Customer State Engine &amp; Markov Dynamics
+              Customer Lifecycle Stages
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-              9 auditable lifecycle states with empirical transition probabilities computed directly across active dataset observations
+              9 customer stages, based on real activity from your data
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(59, 130, 246, 0.12)", border: "1px solid rgba(59, 130, 246, 0.3)", padding: "6px 12px", borderRadius: "8px", color: "var(--accent-blue)", fontSize: "0.8rem", fontWeight: 700 }}>
             <GitBranch size={16} />
-            <span>9 State Markov Chain</span>
+            <span>9 Customer Stages</span>
           </div>
         </div>
       </div>
@@ -83,10 +83,10 @@ export const StatesView: React.FC = () => {
       {/* Markov Transition Heatmap */}
       <div className="glass-card" style={{ padding: "24px" }}>
         <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
-          Empirical Markov Transition Probability Matrix P(S_{'{'}t+1{'}'} | S_t)
+          How customers move between stages
         </h3>
         <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "20px" }}>
-          Observed transition likelihoods between consecutive customer event windows. Rows represent starting state (S_t); columns represent next state (S_t+1).
+          How likely a customer is to move from one stage (row) to another stage (column) over time, calculated from your actual data history.
         </p>
 
         {matrix ? (

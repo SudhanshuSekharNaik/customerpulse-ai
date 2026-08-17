@@ -44,18 +44,18 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer }) 
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
       <div className="glass-card" style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Customer Segmentation Matrix
+              Customer Groups &amp; Segments
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-              Multi-K statistical clustering with auto-generated behavioral labels vs. global population means
+              Customers grouped by similar behavior, compared to the average customer
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "6px 12px", borderRadius: "8px", color: "var(--accent-emerald)", fontSize: "0.8rem", fontWeight: 700 }}>
             <Award size={16} />
-            <span>Optimal K=3 (Silhouette: 0.864)</span>
+            <span>Best Setup: 3 Groups (Distinctness: 0.86)</span>
           </div>
         </div>
       </div>
@@ -63,41 +63,41 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer }) 
       {/* Multi-K Candidate Search Table */}
       <div className="glass-card" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "6px" }}>
-          Hyperparameter Search: Optimal Cluster Count Selection (K=3..6)
+          Finding the best number of customer groups
         </h3>
         <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "14px" }}>
-          Evaluated across Silhouette Score (maximization), Davies-Bouldin (minimization), and GMM Bayesian Information Criterion
+          We tested grouping your customers into 3, 4, 5, or 6 groups to find which split produces the clearest, most distinct customer profiles.
         </p>
 
         <table className="data-table">
           <thead>
             <tr>
-              <th>Clusters (K)</th>
-              <th>Silhouette Score</th>
-              <th>Davies-Bouldin Index</th>
-              <th>Calinski-Harabasz</th>
-              <th>GMM BIC Score</th>
-              <th>Status</th>
+              <th>Group Count</th>
+              <th>Group Distinctness</th>
+              <th>Group Compactness</th>
+              <th>Overall Spread</th>
+              <th>Statistical Fit</th>
+              <th>Recommendation</th>
             </tr>
           </thead>
           <tbody>
             {kCandidates.map((c) => (
               <tr key={c.k} style={{ background: c.selected ? "rgba(59, 130, 246, 0.06)" : "transparent" }}>
                 <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)", color: c.selected ? "var(--accent-cyan)" : "#FFFFFF" }}>
-                  K = {c.k}
+                  {c.k} Groups
                 </td>
                 <td style={{ fontWeight: 600, color: c.silhouette > 0.85 ? "var(--accent-emerald)" : "var(--text-primary)" }}>
-                  {c.silhouette.toFixed(4)}
+                  {c.silhouette.toFixed(3)} {c.silhouette > 0.85 ? "(Excellent)" : "(Good)"}
                 </td>
                 <td style={{ color: c.davies_bouldin < 0.4 ? "var(--accent-emerald)" : "var(--text-primary)" }}>
-                  {c.davies_bouldin.toFixed(4)}
+                  {c.davies_bouldin.toFixed(3)} {c.davies_bouldin < 0.4 ? "(Tight)" : "(Moderate)"}
                 </td>
                 <td>{c.calinski.toFixed(1)}</td>
                 <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem" }}>{c.gmm_bic.toLocaleString()}</td>
                 <td>
                   {c.selected ? (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--accent-emerald)", fontWeight: 700, fontSize: "0.75rem" }}>
-                      <CheckCircle size={14} /> SELECTED
+                      <CheckCircle size={14} /> BEST FIT
                     </span>
                   ) : (
                     <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Evaluated</span>

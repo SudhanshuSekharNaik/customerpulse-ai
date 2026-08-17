@@ -75,23 +75,27 @@ export interface CustomerDetail {
   segment_id?: number;
   churn_prediction?: {
     predicted_class: string;
-    predicted_probability: number;
+    predicted_probability?: number | null;
     decision_threshold: number;
     shap_values: Record<string, number>;
-    ci_low?: number;
-    ci_high?: number;
+    is_cold_start?: boolean;
+    status_text?: string;
+    ci_low?: number | null;
+    ci_high?: number | null;
   };
   next_event_prediction?: {
     predicted_event: string;
     predicted_probability: number;
   };
   uplift_estimate?: {
-    estimated_uplift: number;
-    decile: number;
-    ci_low: number;
-    ci_high: number;
-    model_used: string;
-    label: string;
+    estimated_uplift?: number | null;
+    decile?: number | null;
+    ci_low?: number | null;
+    ci_high?: number | null;
+    model_used?: string;
+    label?: string;
+    is_available?: boolean;
+    status_text?: string;
   };
   top_recommendation?: {
     action_type: string;
@@ -186,6 +190,7 @@ export interface Recommendation {
 export interface OfflineBacktestReport {
   status: string;
   total_evaluated_customers: number;
+  total_evaluated_accounts?: number;
   action_diversity_index: number;
   is_degenerate_policy: boolean;
   top_action_share: number;
@@ -385,10 +390,12 @@ export interface TrafficForecastReport {
     views: number;
     carts: number;
     purchases: number;
-    cart_abandonment_rate_pct: number;
-    cart_to_view_ratio_pct: number;
-    checkout_conversion_rate_pct: number;
-    recovered_cart_revenue_potential_inr: number;
+    has_funnel_events?: boolean;
+    funnel_note?: string;
+    cart_abandonment_rate_pct?: number | null;
+    cart_to_view_ratio_pct?: number | null;
+    checkout_conversion_rate_pct?: number | null;
+    recovered_cart_revenue_potential_inr?: number;
   };
   category_surges: CategorySurge[];
   festive_sale_multiplier: {

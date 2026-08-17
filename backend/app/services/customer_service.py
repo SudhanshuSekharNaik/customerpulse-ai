@@ -1,5 +1,6 @@
-"""Customer 360 query and retrieval service."""
-
+import os
+import json
+import math
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -36,12 +37,28 @@ class CustomerService:
         results = []
         for c in customers:
             churn_pred = next((p for p in c.predictions if p.model_type == "churn"), None)
-            churn_prob = churn_pred.predicted_probability if churn_pred else None
+            is_cold = bool(c.is_cold_start or (churn_pred and churn_pred.predicted_class in ["COLD_START_UNCERTAIN", "UNCERTAIN_COLD_START"]))
+            churn_prob = churn_pred.predicted_probability if (churn_pred and not is_cold) else None
             
-            # Opportunity score estimation
-            opp_score = 65.0
-            if c.features:
-                opp_score = min(99.0, (c.features.monetary_total / 100.0) + (c.features.frequency_30d * 3.0))
+            # Opportunity score computation (0-100 scale, non-capped, well-differentiated)
+            # Combines Value (Spend + Orders), Urgency (Churn risk / recency), and Engagement Velocity
+            spend = float(c.total_revenue or 0.0)
+            orders = int(c.total_orders or 1)
+            churn_factor = float(churn_prob) if churn_prob is not None else 0.25
+
+            # 1. Value sub-score (0 to 40 pts) using continuous logarithmic scaling so 45k vs 60k differ clearly
+            value_pts = min(40.0, max(5.0, (math.log1p(spend) / math.log1p(100000.0)) * 35.0 + min(5.0, orders * 0.8)))
+
+            # 2. Risk & Urgency sub-score (0 to 35 pts) - high spend + higher churn risk = higher immediate intervention opportunity
+            risk_urgency_pts = churn_factor * 35.0
+
+            # 3. Activity / Engagement sub-score (0 to 25 pts)
+            recency = float(c.features.recency_days) if (c.features and c.features.recency_days is not None) else 15.0
+            recency_urgency = math.exp(-((recency - 20.0) ** 2) / 300.0) * 15.0
+            freq_pts = min(10.0, (c.features.frequency_30d * 2.0) if c.features else 2.0)
+            engagement_pts = recency_urgency + freq_pts
+
+            opp_score = round(min(98.5, max(12.0, value_pts + risk_urgency_pts + engagement_pts)), 1)
 
             results.append({
                 "customer_id": c.customer_id,
@@ -52,11 +69,11 @@ class CustomerService:
                 "total_events": c.total_events,
                 "total_revenue": round(c.total_revenue, 2),
                 "total_orders": c.total_orders,
-                "is_cold_start": c.is_cold_start,
+                "is_cold_start": is_cold,
                 "current_state": c.state.current_state if c.state else "UNKNOWN",
                 "segment_label": c.segment.segment_label if c.segment else "Unassigned",
                 "churn_probability": churn_prob,
-                "opportunity_score": round(opp_score, 1),
+                "opportunity_score": opp_score,
             })
 
         return {
@@ -77,6 +94,8 @@ class CustomerService:
         nxt_pred = next((p for p in customer.predictions if p.model_type == "next_event"), None)
         uplift_rec = customer.uplift_predictions[0] if customer.uplift_predictions else None
         top_rec = customer.recommendations[0] if customer.recommendations else None
+
+        is_cold = bool(customer.is_cold_start or (churn_pred and churn_pred.predicted_class in ["COLD_START_UNCERTAIN", "UNCERTAIN_COLD_START"]))
 
         feat_dict = None
         if customer.features:
@@ -106,8 +125,57 @@ class CustomerService:
                 "top_category": f.top_category,
                 "category_entropy": f.category_entropy,
                 "unique_items_viewed": f.unique_items_viewed,
-                "is_cold_start": f.is_cold_start,
+                "is_cold_start": is_cold,
             }
+
+        # Uplift model verification
+        meta_path = "ml/models/uplift_model_metadata.json"
+        has_uplift_model = os.path.exists(meta_path)
+        if uplift_rec and has_uplift_model:
+            uplift_dict = {
+                "is_available": True,
+                "estimated_uplift": uplift_rec.estimated_uplift,
+                "decile": uplift_rec.uplift_decile,
+                "ci_low": uplift_rec.confidence_interval_low,
+                "ci_high": uplift_rec.confidence_interval_high,
+                "model_used": uplift_rec.model_used,
+                "label": "Estimated treatment uplift",
+            }
+        else:
+            uplift_dict = {
+                "is_available": False,
+                "estimated_uplift": None,
+                "decile": None,
+                "status_text": "Not available for this dataset",
+                "reason": "Uplift modeling requires A/B campaign treatment & control data.",
+            }
+
+        # Churn prediction payload with honest cold-start handling
+        if churn_pred:
+            if is_cold:
+                churn_dict = {
+                    "is_cold_start": True,
+                    "status_text": "New customer — not enough history for a prediction yet",
+                    "predicted_class": "NEW_CUSTOMER",
+                    "predicted_probability": None,
+                    "decision_threshold": churn_pred.decision_threshold or 0.50,
+                    "shap_values": {},
+                    "ci_low": None,
+                    "ci_high": None,
+                }
+            else:
+                churn_dict = {
+                    "is_cold_start": False,
+                    "status_text": "Active ML prediction",
+                    "predicted_class": churn_pred.predicted_class,
+                    "predicted_probability": churn_pred.predicted_probability,
+                    "decision_threshold": churn_pred.decision_threshold or 0.50,
+                    "shap_values": churn_pred.shap_values or {},
+                    "ci_low": churn_pred.confidence_interval_low,
+                    "ci_high": churn_pred.confidence_interval_high,
+                }
+        else:
+            churn_dict = None
 
         return {
             "customer_id": customer.customer_id,
@@ -118,32 +186,18 @@ class CustomerService:
             "total_events": customer.total_events,
             "total_revenue": round(customer.total_revenue, 2),
             "total_orders": customer.total_orders,
-            "is_cold_start": customer.is_cold_start,
+            "is_cold_start": is_cold,
             "features": feat_dict,
             "current_state": customer.state.current_state if customer.state else "UNKNOWN",
             "previous_state": customer.state.previous_state if customer.state else None,
             "segment_label": customer.segment.segment_label if customer.segment else "Unassigned",
             "segment_id": customer.segment.segment_id if customer.segment else None,
-            "churn_prediction": {
-                "predicted_class": churn_pred.predicted_class if churn_pred else "UNKNOWN",
-                "predicted_probability": churn_pred.predicted_probability if churn_pred else 0.0,
-                "decision_threshold": churn_pred.decision_threshold if churn_pred else 0.5,
-                "shap_values": churn_pred.shap_values if churn_pred else {},
-                "ci_low": churn_pred.confidence_interval_low if churn_pred else None,
-                "ci_high": churn_pred.confidence_interval_high if churn_pred else None,
-            } if churn_pred else None,
+            "churn_prediction": churn_dict,
             "next_event_prediction": {
                 "predicted_event": nxt_pred.predicted_class if nxt_pred else "UNKNOWN",
                 "predicted_probability": nxt_pred.predicted_probability if nxt_pred else 0.0,
             } if nxt_pred else None,
-            "uplift_estimate": {
-                "estimated_uplift": uplift_rec.estimated_uplift if uplift_rec else 0.0,
-                "decile": uplift_rec.uplift_decile if uplift_rec else 5,
-                "ci_low": uplift_rec.confidence_interval_low if uplift_rec else 0.0,
-                "ci_high": uplift_rec.confidence_interval_high if uplift_rec else 0.0,
-                "model_used": uplift_rec.model_used if uplift_rec else "X_LEARNER",
-                "label": "Estimated treatment uplift",
-            } if uplift_rec else None,
+            "uplift_estimate": uplift_dict,
             "top_recommendation": {
                 "action_type": top_rec.action_type if top_rec else "NO_ACTION",
                 "what": top_rec.what_text if top_rec else "Maintain standard organic flow",
@@ -164,3 +218,4 @@ class CustomerService:
                 for e in recent_events
             ],
         }
+

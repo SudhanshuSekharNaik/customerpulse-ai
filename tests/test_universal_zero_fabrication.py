@@ -61,11 +61,13 @@ def test_amazon_benchmark_zero_fabrication():
     assert report["total_rows"] == 12000
     assert report["unique_entities"] == expected_unique_customers
 
-    # Check top customer summaries have no NaNs
+    # Check top customer summaries have valid revenues and honest cold start
     for c in report["customer_summaries"]:
         assert c["total_revenue"] >= 0.0
-        assert not np.isnan(c["churn_probability"])
-        assert 0.0 <= c["churn_probability"] <= 1.0
+        if c.get("is_cold_start", False) or c.get("churn_probability") is None:
+            assert c["churn_probability"] is None or (isinstance(c["churn_probability"], (int, float)) and not np.isnan(c["churn_probability"]))
+        else:
+            assert 0.0 <= float(c["churn_probability"]) <= 1.0
 
     # Check segmentation has optimal K with valid silhouette
     seg_models = [m for m in report["model_results"] if m["model_type"] == "SEGMENTATION"]
