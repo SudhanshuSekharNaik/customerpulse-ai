@@ -106,15 +106,23 @@ class UniversalPipelineRunner:
                 recency_days = max(0.0, (max_time - last_time).total_seconds() / 86400.0)
                 tenure_days = max(0.1, (last_time - first_time).total_seconds() / 86400.0)
                 freq = len(ent_df)
-                monetary = float(ent_df["revenue"].sum())
-
-                # Transaction / order counts
-                tx_count = int((ent_df["event_type"].isin(["transaction", "purchase", "buy", "order"])).sum())
-                if tx_count == 0 and monetary > 0:
+                
+                # Check for explicit event semantics
+                has_event_types = ent_df["event_type"].isin(["view", "addtocart", "add_to_cart", "cart", "purchase", "transaction", "order", "buy"]).any()
+                
+                if has_event_types:
+                    purch_df = ent_df[ent_df["event_type"].isin(["purchase", "transaction", "order", "buy"])]
+                    views = int((ent_df["event_type"] == "view").sum())
+                    carts = int((ent_df["event_type"].isin(["addtocart", "add_to_cart", "cart"])).sum())
+                    purchases = int(len(purch_df))
+                    tx_count = int(purch_df["transaction_id"].nunique()) if ("transaction_id" in purch_df.columns and not purch_df.empty) else purchases
+                    monetary = float(purch_df["revenue"].sum()) if not purch_df.empty else 0.0
+                else:
+                    views = 0
+                    carts = 0
+                    purchases = freq
                     tx_count = freq
-
-                views = int((ent_df["event_type"] == "view").sum())
-                carts = int((ent_df["event_type"].isin(["addtocart", "add_to_cart", "cart"])).sum())
+                    monetary = float(ent_df["revenue"].sum())
 
                 # Category and location
                 cats = ent_df["category"].dropna()
@@ -129,15 +137,26 @@ class UniversalPipelineRunner:
                 is_cold = (freq <= 1) and (recency_days < 7)
 
                 # Sliding windows
-                views = int((ent_df["event_type"] == "view").sum())
-                carts = int((ent_df["event_type"].isin(["addtocart", "add_to_cart", "cart"])).sum())
-                tx_count = int((ent_df["event_type"].isin(["transaction", "purchase", "order", "buy"])).sum())
-                if tx_count == 0 and monetary > 0:
-                    tx_count = freq
-
                 f_7d = int((ent_df["timestamp"] >= max_time - timedelta(days=7)).sum())
                 f_30d = int((ent_df["timestamp"] >= max_time - timedelta(days=30)).sum())
-                m_30d = float(ent_df[ent_df["timestamp"] >= max_time - timedelta(days=30)]["revenue"].sum())
+                
+                if has_event_types:
+                    m_30d_df = ent_df[(ent_df["timestamp"] >= max_time - timedelta(days=30)) & (ent_df["event_type"].isin(["purchase", "transaction", "order", "buy"]))]
+                    m_30d = float(m_30d_df["revenue"].sum()) if not m_30d_df.empty else 0.0
+                    tx_30d = int(((ent_df["timestamp"] >= max_time - timedelta(days=30)) & (ent_df["event_type"].isin(["purchase", "transaction", "order", "buy"]))).sum())
+                    tx_7d = int(((ent_df["timestamp"] >= max_time - timedelta(days=7)) & (ent_df["event_type"].isin(["purchase", "transaction", "order", "buy"]))).sum())
+                    v_7d = int(((ent_df["timestamp"] >= max_time - timedelta(days=7)) & (ent_df["event_type"] == "view")).sum())
+                    v_30d = int(((ent_df["timestamp"] >= max_time - timedelta(days=30)) & (ent_df["event_type"] == "view")).sum())
+                    c_7d = int(((ent_df["timestamp"] >= max_time - timedelta(days=7)) & (ent_df["event_type"].isin(["addtocart", "add_to_cart", "cart"]))).sum())
+                    c_30d = int(((ent_df["timestamp"] >= max_time - timedelta(days=30)) & (ent_df["event_type"].isin(["addtocart", "add_to_cart", "cart"]))).sum())
+                else:
+                    m_30d = float(ent_df[ent_df["timestamp"] >= max_time - timedelta(days=30)]["revenue"].sum())
+                    tx_30d = f_30d
+                    tx_7d = f_7d
+                    v_7d = 0
+                    v_30d = 0
+                    c_7d = 0
+                    c_30d = 0
 
                 features_list.append({
                     "customer_id": str(ent_id),
@@ -151,20 +170,20 @@ class UniversalPipelineRunner:
                     "monetary_30d": round(m_30d, 2),
                     "aov": round(monetary / max(1, tx_count), 2) if tx_count > 0 else 0.0,
                     "views": views,
-                    "views_7d": f_7d if views > 0 else 0,
-                    "views_30d": f_30d if views > 0 else 0,
+                    "views_7d": v_7d,
+                    "views_30d": v_30d,
                     "views_90d": views,
                     "carts": carts,
-                    "carts_7d": 0,
-                    "carts_30d": 0,
+                    "carts_7d": c_7d,
+                    "carts_30d": c_30d,
                     "carts_90d": carts,
                     "transactions": tx_count,
-                    "transactions_7d": f_7d if tx_count > 0 else 0,
-                    "transactions_30d": f_30d if tx_count > 0 else 0,
+                    "transactions_7d": tx_7d,
+                    "transactions_30d": tx_30d,
                     "transactions_90d": tx_count,
                     "cart_to_view_ratio": round(carts / max(1, views), 4) if views > 0 else 0.0,
-                    "purchase_to_cart_ratio": round(tx_count / max(1, carts), 4) if carts > 0 else 0.0,
-                    "conversion_rate": round(tx_count / max(1, freq), 4),
+                    "purchase_to_cart_ratio": round(purchases / max(1, carts), 4) if carts > 0 else 0.0,
+                    "conversion_rate": round(purchases / max(1, freq), 4),
                     "purchase_interval_days": round(recency_days, 1),
                     "velocity_7d_30d": round(f_7d / max(1, f_30d / 4.0), 2) if f_30d > 0 else 0.0,
                     "engagement_velocity": 0.0,

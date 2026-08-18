@@ -24,7 +24,7 @@ export const AgentView: React.FC = () => {
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
 
   const SUGGESTED_QUERIES = [
-    "What is the current state and churn risk for customer cust_1?",
+    "What is the current state and churn risk for customer AMZ_CUST_00001?",
     "Why are high-value customers in the DECLINING state at risk?",
     "Which customer segment has the highest average revenue and cart conversion?",
     "What are the recommended actions for at-risk customers this week?",

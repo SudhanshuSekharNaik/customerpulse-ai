@@ -94,7 +94,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Average Added Value</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
-              +₹{backtest?.average_expected_impact_inr?.toFixed(0) || "229"}
+              +₹{backtest?.average_expected_impact_inr !== undefined ? backtest.average_expected_impact_inr.toFixed(0) : "0"}
             </div>
             <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Estimated lift per customer</div>
           </div>
@@ -102,7 +102,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Tested Accounts</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-cyan)" }}>
-              {backtest?.total_evaluated_accounts?.toLocaleString() || "3,000"}
+              {backtest?.total_evaluated_accounts !== undefined ? backtest.total_evaluated_accounts.toLocaleString() : "0"}
             </div>
             <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Historical validation sample</div>
           </div>

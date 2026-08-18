@@ -48,7 +48,7 @@ class SemanticColumnDetector:
 
     # Regex patterns for column names
     NAME_PATTERNS = {
-        "CUSTOMER_ID": r"\b(customer_?id|cust_?id|client_?id|visitor_?id|shopper_?id|member_?id|patient_?id|pat_?id)\b",
+        "CUSTOMER_ID": r"\b(canonical_?customer_?id|canonical_?cust_?id|customer_?id|cust_?id|client_?id|visitor_?id|shopper_?id|member_?id|patient_?id|pat_?id)\b",
         "USER_ID": r"\b(user_?id|uid|employee_?id|emp_?id|staff_?id)\b",
         "ACCOUNT_ID": r"\b(account_?id|acc_?id|acct_?no|org_?id)\b",
         "TRANSACTION_ID": r"\b(transaction_?id|tx_?id|order_?id|invoice_?id|bill_?id|receipt_?id)\b",

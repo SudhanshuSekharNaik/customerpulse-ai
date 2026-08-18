@@ -16,7 +16,10 @@ router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 def get_executive_overview(db: Session = Depends(get_db)):
     total_custs = db.query(Customer).count()
     total_events = db.query(Event).count()
-    total_orders = db.query(func.sum(Customer.total_orders)).scalar() or total_events
+    total_orders = db.query(func.sum(Customer.total_orders)).scalar()
+    if total_orders is None:
+        total_orders = db.query(Event).filter(Event.event_type.in_(["purchase", "transaction", "order", "buy"])).count()
+    
     total_revenue = db.query(func.sum(Customer.total_revenue)).scalar() or 0.0
     total_products = db.query(Product).count()
     
@@ -32,7 +35,7 @@ def get_executive_overview(db: Session = Depends(get_db)):
     if at_risk_cust_ids:
         rev_at_risk = db.query(func.sum(Customer.total_revenue)).filter(Customer.customer_id.in_(at_risk_cust_ids)).scalar() or 0.0
 
-    total_uplift_impact = db.query(func.sum(Recommendation.expected_impact)).scalar() or (total_revenue * 0.084)
+    total_uplift_impact = db.query(func.sum(Recommendation.expected_impact)).scalar() or 0.0
 
     return {
         "total_customers": total_custs,

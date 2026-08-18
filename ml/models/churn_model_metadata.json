@@ -1,54 +1,8 @@
 {
-  "optimal_threshold": 0.235,
+  "optimal_threshold": 0.2,
   "is_calibrated": true,
   "cost_ratio": "5:1",
-  "pr_auc": 0.5081769089749076,
-  "roc_auc": 0.692244100838787,
-  "f1_score": 0.5843621399176955,
-  "precision": 0.4251497005988024,
-  "recall": 0.9342105263157895,
-  "brier_score": 0.23651960406160344,
-  "baseline_lr_pr_auc": 0.4561270491783397,
-  "baseline_lr_roc_auc": 0.6614146465111992,
-  "hyperparameters": {
-    "n_estimators": 50,
-    "max_depth": 7,
-    "num_leaves": 49,
-    "learning_rate": 0.08880965698768718,
-    "min_child_samples": 41,
-    "subsample": 0.6296178606936361,
-    "colsample_bytree": 0.7433862914177091,
-    "reg_alpha": 0.0029072088906598446,
-    "reg_lambda": 2.8340904295147746,
-    "scale_pos_weight": 3.1184210526315788,
-    "random_state": 42,
-    "verbose": -1,
-    "n_jobs": -1
-  },
-  "class_balance": {
-    "train_positive_rate": 0.24281150159744408,
-    "val_positive_rate": 0.30440414507772023,
-    "test_positive_rate": 0.3474285714285714
-  },
-  "confusion_matrix": [
-    [
-      187,
-      384
-    ],
-    [
-      20,
-      284
-    ]
-  ],
-  "dataset_hash": "871277ea945e3ac1",
-  "row_count": 2273,
-  "customers_scored": 1299,
-  "unique_predictions": 771,
-  "prediction_distribution": {
-    "LOW": 425,
-    "MEDIUM": 308,
-    "HIGH": 555
-  },
-  "shap_coverage": "1288 / 1288",
-  "validation_status": "PASSED"
+  "pr_auc": 0.5366331069621311,
+  "roc_auc": 0.7795668932792511,
+  "f1_score": 0.568100358422939
 }

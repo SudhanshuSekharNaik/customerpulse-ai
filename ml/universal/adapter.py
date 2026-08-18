@@ -44,10 +44,12 @@ class DatasetAdapter:
 
         # Identify key source columns
         col_cust = (
-            reverse_mapping.get("CUSTOMER_ID")
+            ("canonical_customer_id" if "canonical_customer_id" in df.columns else None)
+            or reverse_mapping.get("CUSTOMER_ID")
             or reverse_mapping.get("USER_ID")
             or reverse_mapping.get("ACCOUNT_ID")
             or reverse_mapping.get("ENTITY_ID")
+            or ("customer_id" if "customer_id" in df.columns else None)
         )
         col_tx = reverse_mapping.get("TRANSACTION_ID") or reverse_mapping.get("ORDER_ID")
         col_time = reverse_mapping.get("TIMESTAMP") or reverse_mapping.get("DATE") or reverse_mapping.get("ORDER_DATE")
@@ -82,7 +84,7 @@ class DatasetAdapter:
 
         canonical_df = pd.DataFrame()
 
-        # 1. Entity ID
+        # 1. Entity ID (Canonical Source-of-Truth Identity)
         if col_cust and col_cust in df.columns:
             canonical_df["entity_id"] = df[col_cust].astype(str)
         else:
@@ -107,13 +109,19 @@ class DatasetAdapter:
 
         # 4. Event Type
         if col_event and col_event in df.columns:
-            canonical_df["event_type"] = df[col_event].astype(str).str.lower()
+            canonical_df["event_type"] = df[col_event].astype(str).str.lower().str.strip()
         else:
             canonical_df["event_type"] = "transaction" if col_rev else "interaction"
 
-        # 5. Revenue / Monetary Value
+        # 5. Revenue / Monetary Value (Strict purchase-only isolation)
         if col_rev and col_rev in df.columns:
-            canonical_df["revenue"] = pd.to_numeric(df[col_rev], errors="coerce").fillna(0.0)
+            raw_rev = pd.to_numeric(df[col_rev], errors="coerce").fillna(0.0)
+            has_discrete_events = canonical_df["event_type"].isin(["view", "addtocart", "add_to_cart", "cart", "purchase", "transaction", "order", "buy"]).any()
+            if has_discrete_events:
+                is_purchase = canonical_df["event_type"].isin(["purchase", "transaction", "order", "buy"])
+                canonical_df["revenue"] = np.where(is_purchase, raw_rev, 0.0)
+            else:
+                canonical_df["revenue"] = raw_rev
         else:
             canonical_df["revenue"] = 0.0
 
