@@ -1,0 +1,46 @@
+{
+  "selected_k": 3,
+  "silhouette_score": 0.6414,
+  "davies_bouldin_index": 0.5282,
+  "calinski_harabasz_score": 1191.6,
+  "algorithm": "Deterministic KMeans + RobustScaler",
+  "feature_columns": [
+    "recency_days",
+    "frequency_30d",
+    "monetary_total",
+    "cart_to_view_ratio",
+    "conversion_rate"
+  ],
+  "cluster_diagnostics": [
+    {
+      "segment_id": 0,
+      "segment_label": "High-Value Loyalists",
+      "customer_count": 155,
+      "percentage": 11.9,
+      "avg_spend": 162704.69,
+      "spend_deviation_pct": 476.9,
+      "is_outlier_cluster": true,
+      "diagnostic_note": "Extreme behavioral high-spend outlier (155 accounts with \u20b9162,704.69 avg spend). Deviation is +477% vs population average. Retained as dedicated strategic VIP outlier with white-glove retention."
+    },
+    {
+      "segment_id": 1,
+      "segment_label": "Core Steady Customers",
+      "customer_count": 1143,
+      "percentage": 88.0,
+      "avg_spend": 8358.58,
+      "spend_deviation_pct": -70.4,
+      "is_outlier_cluster": false,
+      "diagnostic_note": "Balanced behavioral cohort with cohesive centroid silhouette fit."
+    },
+    {
+      "segment_id": 2,
+      "segment_label": "VIP Elite",
+      "customer_count": 1,
+      "percentage": 0.1,
+      "avg_spend": 1865677.95,
+      "spend_deviation_pct": 6514.6,
+      "is_outlier_cluster": true,
+      "diagnostic_note": "Extreme behavioral high-spend outlier (1 accounts with \u20b91,865,677.95 avg spend). Deviation is +6515% vs population average. Retained as dedicated strategic VIP outlier with white-glove retention."
+    }
+  ]
+}

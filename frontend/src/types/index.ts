@@ -82,7 +82,11 @@ export interface CustomerDetail {
     status_text?: string;
     ci_low?: number | null;
     ci_high?: number | null;
+    positive_drivers?: any[];
+    protective_drivers?: any[];
+    top_risk_factor?: any;
   };
+  decision_trace?: any;
   next_event_prediction?: {
     predicted_event: string;
     predicted_probability: number;
@@ -221,6 +225,7 @@ export interface ModelRun {
   f1_score?: number;
   qini_score?: number;
   silhouette_score?: number;
+  validation_method?: string;
 }
 
 export interface AgentToolCall {

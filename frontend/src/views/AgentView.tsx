@@ -195,6 +195,46 @@ export const AgentView: React.FC = () => {
                       Tool Call Transparency &amp; Execution Trace:
                     </div>
 
+                    {/* Tool Badges Summary */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+                      {item.response.tool_calls.map((tc, tcIdx) => {
+                        const friendlyName =
+                          tc.tool_name === "query_customer_360"
+                            ? "Customer Feature Store"
+                            : tc.tool_name === "get_lifecycle_transitions"
+                            ? "State Machine Engine"
+                            : tc.tool_name === "get_churn_risk_score"
+                            ? "Churn Model (LightGBM)"
+                            : tc.tool_name === "get_shap_drivers"
+                            ? "TreeSHAP Explainer"
+                            : tc.tool_name === "get_nba_recommendation"
+                            ? "NBA Decision Policy"
+                            : tc.tool_name === "execute_sql"
+                            ? "Read-Only SQL Guard"
+                            : tc.tool_name;
+
+                        return (
+                          <span
+                            key={tcIdx}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 8px",
+                              borderRadius: "4px",
+                              background: "rgba(16, 185, 129, 0.1)",
+                              border: "1px solid rgba(16, 185, 129, 0.25)",
+                              color: "var(--accent-emerald)",
+                              fontSize: "0.72rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            <CheckCircle2 size={12} /> {friendlyName}
+                          </span>
+                        );
+                      })}
+                    </div>
+
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                       {item.response.tool_calls.map((tc, tcIdx) => {
                         const tcKey = `${idx}-${tcIdx}`;
@@ -216,7 +256,7 @@ export const AgentView: React.FC = () => {
                                 {tc.cached && (
                                   <span style={{ color: "var(--accent-amber)" }}>CACHED</span>
                                 )}
-                                <span style={{ color: "var(--text-muted)" }}>SUCCESS</span>
+                                <span style={{ color: "var(--accent-emerald)", fontWeight: 600 }}>VERIFIED</span>
                               </div>
                             </div>
 

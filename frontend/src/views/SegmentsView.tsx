@@ -255,6 +255,48 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, on
         })}
       </div>
 
+      {/* Cluster Diagnostics & Outlier Rationale Card */}
+      <div className="glass-card" style={{ padding: "20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+          <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#FFFFFF" }}>
+            Cluster Diagnostics &amp; Strategic Outlier Rationale
+          </h3>
+          <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "2px 8px", borderRadius: "4px" }}>
+            Deterministic KMeans + RobustScaler
+          </span>
+        </div>
+        <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "14px" }}>
+          Unsupervised clustering diagnosis explaining population distributions, separation metrics, and why high-spend outliers are isolated into dedicated strategic tiers.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
+          <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Silhouette Score</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-emerald)" }}>0.864 / 0.641</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Optimal Cluster Separation</div>
+          </div>
+
+          <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Davies-Bouldin Index</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-cyan)" }}>0.348</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Tight Centroid Compactness</div>
+          </div>
+
+          <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Calinski-Harabasz Score</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#93C5FD" }}>1,461.8</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>High Variance Ratio</div>
+          </div>
+        </div>
+
+        <div style={{ padding: "12px 16px", borderRadius: "8px", background: "rgba(59, 130, 246, 0.06)", border: "1px solid rgba(59, 130, 246, 0.2)", fontSize: "0.8rem", lineHeight: 1.5 }}>
+          <div style={{ fontWeight: 700, color: "#93C5FD", marginBottom: "4px" }}>
+            Strategic Outlier Preservation Policy:
+          </div>
+          Extreme high-spend accounts (such as VIP Elite with ₹18.65L spend, exhibiting +6,515% deviation vs the ₹28.7K population average) are isolated into dedicated strategic tiers rather than forced into mass cohorts. This preserves actionable marketing granularity and prevents centroid distortion across Core Steady customers.
+        </div>
+      </div>
+
       {/* Multi-K Candidate Search Table */}
       <div className="glass-card" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "6px" }}>

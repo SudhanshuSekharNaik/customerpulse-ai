@@ -14,6 +14,7 @@ import {
   Eye,
   CreditCard,
   Layers,
+  Cpu,
 } from "lucide-react";
 import { api } from "../services/api";
 import { CustomerSummary, CustomerDetail, SegmentSummary } from "../types";
@@ -26,6 +27,7 @@ import {
   Tooltip,
   Cell,
 } from "recharts";
+import { CustomerDecisionTraceModal } from "../components/CustomerDecisionTraceModal";
 
 interface CustomersViewProps {
   selectedCustomerId?: string | null;
@@ -50,6 +52,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   const [detailLoading, setDetailLoading] = useState(false);
   const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
   const [nextAction, setNextAction] = useState<any>(null);
+  const [traceModalOpen, setTraceModalOpen] = useState(false);
 
   useEffect(() => {
     api.getSegments().then(setSegments).catch(console.error);
@@ -301,12 +304,30 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 </div>
               </div>
 
-              <button
-                onClick={onCloseModal}
-                style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
-              >
-                <X size={24} />
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <button
+                  className="btn-secondary"
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "0.8rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "rgba(59, 130, 246, 0.15)",
+                    borderColor: "rgba(59, 130, 246, 0.3)",
+                    color: "#93C5FD",
+                  }}
+                  onClick={() => setTraceModalOpen(true)}
+                >
+                  <Cpu size={14} /> View Decision Trace
+                </button>
+                <button
+                  onClick={onCloseModal}
+                  style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                >
+                  <X size={24} />
+                </button>
+              </div>
             </div>
 
             {detailLoading ? (
@@ -524,6 +545,13 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Customer Decision Trace Modal */}
+      <CustomerDecisionTraceModal
+        customer={customerDetail}
+        isOpen={traceModalOpen}
+        onClose={() => setTraceModalOpen(false)}
+      />
     </div>
   );
 };
