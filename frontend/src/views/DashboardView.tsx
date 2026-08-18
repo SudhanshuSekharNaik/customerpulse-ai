@@ -196,18 +196,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="glass-card stat-card" style={{ borderColor: "rgba(239, 68, 68, 0.3)" }}>
           <div className="stat-label">
-            <span>Revenue at Risk</span>
+            <span>Revenue in At-Risk States</span>
             <AlertTriangle size={16} color="var(--accent-rose)" />
           </div>
           <div className="stat-value" style={{ color: "#F87171" }}>
             ₹{kpis?.revenue_at_risk?.toLocaleString() || "0"}
           </div>
-          <div className="stat-sub">{kpis?.at_risk_customers_count || 0} accounts in declining states</div>
+          <div className="stat-sub">Spend in AT_RISK / DECLINING lifecycle</div>
         </div>
 
         <div className="glass-card stat-card" style={{ borderColor: "rgba(249, 115, 22, 0.3)" }}>
           <div className="stat-label">
-            <span>At-Risk Accounts</span>
+            <span>Lifecycle At-Risk</span>
             <ShieldAlert size={16} color="var(--accent-amber)" />
           </div>
           <div className="stat-value" style={{ color: "#FB923C" }}>
@@ -235,19 +235,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "20px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <span className="badge" style={{ background: "rgba(6, 182, 212, 0.15)", color: "var(--accent-cyan)", border: "1px solid rgba(6, 182, 212, 0.35)" }}>
-                  E-COMMERCE TRAFFIC RADAR
+                <span style={{ fontSize: "0.72rem", fontWeight: 800, background: "rgba(6, 182, 212, 0.2)", color: "var(--accent-cyan)", padding: "2px 8px", borderRadius: "4px" }}>
+                  E-COMMERCE TRAFFIC &amp; CONVERSION
                 </span>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                   {activeContext?.mode_label || activeContext?.dataset_name || "E-Commerce"} Behavior Signature
                 </span>
               </div>
               <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#FFFFFF" }}>
-                Next Peak Traffic &amp; Shopping Surge Forecast
+                Historical Peak Traffic &amp; Shopping Surge Profile
               </h3>
             </div>
 
-            {/* Next Peak Surge Alert Box */}
+            {/* Peak Surge Box */}
             <div style={{
               padding: "10px 16px",
               borderRadius: "10px",
@@ -260,13 +260,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Flame size={24} color="#FBBF24" />
               <div>
                 <div style={{ fontSize: "0.72rem", color: "#FCD34D", fontWeight: 700, textTransform: "uppercase" }}>
-                  Next Projected Shopping Peak Window
+                  Historical Peak Shopping Window
                 </div>
                 <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#FFFFFF" }}>
                   {traffic.next_peak_window.window_description}
                 </div>
                 <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
-                  +{traffic.next_peak_window.projected_traffic_lift_pct}% traffic surge expected &middot; {traffic.next_peak_window.recommended_action}
+                  +{traffic.next_peak_window.projected_traffic_lift_pct}% traffic concentration &middot; {traffic.next_peak_window.recommended_action}
                 </div>
               </div>
             </div>
@@ -371,7 +371,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Top Surging Product Categories ({activeContext?.mode_label || activeContext?.dataset_name || "Active Cohort"})
               </span>
               <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                {traffic.festive_sale_multiplier.event_name} (Multiplier: {traffic.festive_sale_multiplier.traffic_multiplier}x)
+                Ranked by relative customer demand
               </span>
             </div>
 

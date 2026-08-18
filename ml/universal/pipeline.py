@@ -23,7 +23,7 @@ from sklearn.metrics import (
     recall_score,
     confusion_matrix,
 )
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.ensemble import IsolationForest
 import lightgbm as lgb
 import shap
@@ -209,13 +209,17 @@ class UniversalPipelineRunner:
             best_ch = 0.0
 
             if n_entities >= 6:
-                clust_cols = ["recency_days", "frequency", "monetary_total"]
+                clust_cols = [c for c in ["recency_days", "frequency_30d", "monetary_total", "cart_to_view_ratio", "conversion_rate"] if c in feat_df.columns]
+                if not clust_cols:
+                    clust_cols = ["recency_days", "frequency", "monetary_total"]
                 X_raw = feat_df[clust_cols].fillna(0).values
-                scaler = StandardScaler()
+                scaler = RobustScaler()
                 X_scaled = scaler.fit_transform(X_raw)
 
                 max_k = min(6, n_entities - 1)
-                for k_cand in range(2, max_k + 1):
+                best_k = 3
+                best_sil = -1.0
+                for k_cand in range(3, max_k + 1):
                     km_cand = KMeans(n_clusters=k_cand, random_state=42, n_init=10)
                     labels_cand = km_cand.fit_predict(X_scaled)
                     sil_cand = float(silhouette_score(X_scaled, labels_cand))

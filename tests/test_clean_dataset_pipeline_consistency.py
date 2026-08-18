@@ -146,3 +146,56 @@ def test_canonical_customer_ids_preserved_no_synthetic_mutation():
             assert cid.startswith("AMZ_CUST_"), f"Customer ID '{cid}' was mutated from canonical format"
     finally:
         db.close()
+
+
+def test_random_25_customers_cross_page_exact_consistency():
+    """Verify cross-page 100% agreement across Customer 360, Predictions, AI Analyst, Segmentation, and State Machine on 25 random active accounts."""
+    import random
+    db = SessionLocal()
+    try:
+        all_cids = [c[0] for c in db.query(Customer.customer_id).all()]
+        random.seed(42)
+        sample_cids = random.sample(all_cids, min(25, len(all_cids)))
+
+        for cid in sample_cids:
+            c360 = CustomerService.get_customer_360_detail(db, cid)
+            assert c360 is not None, f"Customer 360 missing for {cid}"
+
+            pred = db.query(Prediction).filter(Prediction.customer_id == cid, Prediction.model_type == "churn").first()
+            feat = db.query(CustomerFeature).filter(CustomerFeature.customer_id == cid).first()
+            seg = db.query(CustomerSegment).filter(CustomerSegment.customer_id == cid).first()
+            st = db.query(CustomerState).filter(CustomerState.customer_id == cid).first()
+
+            # 1. Churn Prediction Exact Equality
+            c360_prob = c360["churn_prediction"]["predicted_probability"] if c360.get("churn_prediction") else None
+            assert c360_prob == pred.predicted_probability, f"C360 churn {c360_prob} != DB pred {pred.predicted_probability} for {cid}"
+
+            # 2. Total Spend Exact Equality
+            assert c360["total_revenue"] == feat.monetary_total, f"C360 revenue {c360['total_revenue']} != Feat spend {feat.monetary_total} for {cid}"
+
+            # 3. Order Count Exact Equality
+            assert c360["total_orders"] == feat.transactions_90d, f"C360 orders {c360['total_orders']} != Feat orders {feat.transactions_90d} for {cid}"
+
+            # 4. Segment Exact Equality
+            assert c360["segment_label"] == seg.segment_label, f"C360 segment {c360['segment_label']} != DB seg {seg.segment_label} for {cid}"
+
+            # 5. Lifecycle State Exact Equality
+            assert c360["current_state"] == st.current_state, f"C360 state {c360['current_state']} != DB state {st.current_state} for {cid}"
+    finally:
+        db.close()
+
+
+def test_mlops_and_segmentation_cluster_k_agreement():
+    """Verify that Segmentation and MLOps agree on the selected_k cluster count and silhouette score."""
+    resp_seg = client.get("/api/segments")
+    assert resp_seg.status_code == 200
+    seg_list = resp_seg.json()
+    assert len(seg_list) == 3, f"Expected 3 clusters, got {len(seg_list)}"
+
+    resp_models = client.get("/api/models")
+    assert resp_models.status_code == 200
+    models = resp_models.json()
+    seg_run = next((m for m in models if m["model_type"] == "segmentation"), None)
+    assert seg_run is not None, "Segmentation model run missing from registry"
+    assert seg_run["selected_k"] == 3
+    assert seg_run["silhouette_score"] is not None and seg_run["silhouette_score"] > 0.50

@@ -88,30 +88,30 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
         {/* Model Metrics & Cost Matrix */}
         <div className="glass-card" style={{ padding: "20px" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "6px" }}>
-            How accurate this prediction is
+            Model Evaluation &amp; Out-of-Time Validation
           </h3>
           <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "16px" }}>
-            Tested only on data the model hadn't seen yet to ensure real-world reliability.
+            Evaluated on a temporal holdout partition (unseen future window) to guarantee zero lookahead bias.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
             <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Overall Accuracy</div>
-              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-emerald)" }}>{accuracyRating}</div>
-              <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>PR-AUC: {prAucValue}</div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Validation PR-AUC</div>
+              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-emerald)" }}>{prAucValue}</div>
+              <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>{accuracyRating}</div>
             </div>
 
             <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Ranking Ability</div>
-              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#93C5FD" }}>Strong</div>
-              <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>ROC-AUC: {rocAucValue}</div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Validation ROC-AUC</div>
+              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#93C5FD" }}>{rocAucValue}</div>
+              <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>High Discrimination</div>
             </div>
 
             <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
-              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>At-Risk Threshold</div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Operating Threshold</div>
               <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-cyan)" }}>{(thresholdSlider * 100).toFixed(0)}%</div>
               <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>
-                {overview?.is_calibrated ? "Cost-Calibrated (5:1)" : "Default threshold"}
+                {overview?.is_calibrated ? "Cost-Calibrated (5:1)" : "Standard Decision Cutoff"}
               </div>
             </div>
           </div>

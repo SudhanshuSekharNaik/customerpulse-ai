@@ -88,21 +88,12 @@ class EcommerceTrafficEngine:
         now = datetime.utcnow()
         current_hour = now.hour
 
-        # Find top peak hours from actual dataset hourly distribution
+        # 3. Peak Traffic Window (Empirical observation from dataset event timestamps)
         top_hours_sorted = [int(h) for h in hourly_counts.sort_values(ascending=False).head(4).index.tolist()]
-        future_peaks = [ph for ph in top_hours_sorted if ph > current_hour]
-        if future_peaks:
-            next_peak_start = future_peaks[0]
-            next_peak_end = min(23, next_peak_start + 2)
-            time_until_peak = next_peak_start - current_hour
-            window_text = f"Today, {cls.HOURLY_LABELS[next_peak_start]} – {cls.HOURLY_LABELS[next_peak_end]}"
-            urgency = "IN_HOURS"
-        else:
-            next_peak_start = top_hours_sorted[0]
-            next_peak_end = min(23, next_peak_start + 2)
-            time_until_peak = (24 - current_hour) + next_peak_start
-            window_text = f"Tomorrow, {cls.HOURLY_LABELS[next_peak_start]} – {cls.HOURLY_LABELS[next_peak_end]}"
-            urgency = "NEXT_DAY"
+        next_peak_start = top_hours_sorted[0] if top_hours_sorted else 19
+        next_peak_end = min(23, next_peak_start + 2)
+        window_text = f"Historical Peak Window: {cls.HOURLY_LABELS[next_peak_start]} – {cls.HOURLY_LABELS[next_peak_end]}"
+        urgency = "OBSERVED_PEAK"
 
         # 4. E-Commerce Funnel & Cart Abandonment
         event_col = "event_type" if "event_type" in df.columns else None
@@ -167,9 +158,9 @@ class EcommerceTrafficEngine:
             "next_peak_window": {
                 "window_description": window_text,
                 "urgency": urgency,
-                "hours_until_peak": time_until_peak,
+                "hours_until_peak": 0,
                 "projected_traffic_lift_pct": 38.5,
-                "recommended_action": "Deploy flash sale banners & cart push notifications 30 mins before window.",
+                "recommended_action": "Historical high-activity period based on customer timestamps.",
             },
             "ecommerce_funnel": {
                 "has_funnel_events": has_funnel_events,
@@ -183,12 +174,6 @@ class EcommerceTrafficEngine:
                 "recovered_cart_revenue_potential_inr": recovered_rev,
             },
             "category_surges": category_surges,
-            "festive_sale_multiplier": {
-                "event_name": "Mega Festive / Big Billion / Great Indian Festival Surge",
-                "traffic_multiplier": 3.4,
-                "projected_conversion_uplift_pct": "+28.4%",
-                "peak_categories": ["Electronics & Smartphones", "Fashion & Ethnic Wear", "Home Appliances"],
-            },
         }
 
     @classmethod

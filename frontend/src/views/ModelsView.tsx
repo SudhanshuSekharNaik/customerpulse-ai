@@ -25,7 +25,7 @@ export const ModelsView: React.FC = () => {
   }, []);
 
   const totalEventsStr = overview?.total_events ? overview.total_events.toLocaleString() : "12,000";
-  const totalCustsStr = overview?.total_customers ? overview.total_customers.toLocaleString() : "1,384";
+  const totalCustsStr = overview?.total_customers ? overview.total_customers.toLocaleString() : "1,299";
   const totalProdsStr = overview?.total_products ? overview.total_products.toLocaleString() : "500";
 
   return (
@@ -54,7 +54,7 @@ export const ModelsView: React.FC = () => {
           Ingestion &amp; Schema Integrity Audit Scorecard
         </h3>
         <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "16px" }}>
-          Validation executed on {totalEventsStr} verified transactions across {totalCustsStr} unique customer accounts
+          Validation executed on {totalEventsStr} verified events across {totalCustsStr} unique customer accounts
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
@@ -106,7 +106,7 @@ export const ModelsView: React.FC = () => {
               <th>Model Name</th>
               <th>Type</th>
               <th>Dataset Hash (SHA-256)</th>
-              <th>Rows</th>
+              <th>Training Customers</th>
               <th>Primary Metric</th>
               <th>Status</th>
               <th>Trained At</th>
