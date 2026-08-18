@@ -17,6 +17,9 @@ each item.
 - [ ] Cold-start customers excluded from the main model's training/eval
       set, or excluded and handled separately — never scored with
       undefined/zero-imputed history.
+- [ ] Per-customer explainability verified: Top SHAP risk factors vary across
+      diverse customer cohorts (not a single static global feature broadcast
+      to all rows).
 - [ ] Hyperparameters came from a logged Optuna (or equivalent) search, not
       hand-picked.
 - [ ] `model_runs` row includes a dataset content hash + row count.

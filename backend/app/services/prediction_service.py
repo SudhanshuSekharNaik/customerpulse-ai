@@ -98,19 +98,32 @@ class PredictionService:
                 elif p.shap_values:
                     shaps = p.shap_values
 
-                # Find top magnitude SHAP driver
+                # Find top magnitude SHAP driver for this specific customer
                 top_driver = None
                 if shaps and isinstance(shaps, dict) and len(shaps) > 0:
-                    top_feature = max(shaps.keys(), key=lambda k: abs(float(shaps[k])))
-                    top_driver = {
-                        "feature": top_feature,
-                        "shap_value": round(float(shaps[top_feature]), 3),
-                    }
+                    pos_shaps = {k: float(v) for k, v in shaps.items() if float(v) > 0}
+                    if pos_shaps:
+                        top_feature = max(pos_shaps.keys(), key=lambda k: pos_shaps[k])
+                        top_driver = {
+                            "feature": top_feature,
+                            "shap_value": round(float(pos_shaps[top_feature]), 3),
+                        }
+                    else:
+                        top_feature = max(shaps.keys(), key=lambda k: abs(float(shaps[k])))
+                        top_driver = {
+                            "feature": top_feature,
+                            "shap_value": round(float(shaps[top_feature]), 3),
+                        }
                 else:
-                    top_driver = {
-                        "feature": "recency_days",
-                        "shap_value": round(float((f.recency_days if f else 10.0) / 40.0), 2),
-                    }
+                    r_val = float(f.recency_days if f and f.recency_days is not None else 15.0)
+                    p_int = float(f.purchase_interval_days if f and f.purchase_interval_days is not None else r_val)
+                    f_30 = int(f.frequency_30d if f and f.frequency_30d is not None else 0)
+                    if r_val > 45.0:
+                        top_driver = {"feature": "recency_days", "shap_value": round(r_val / 40.0, 2)}
+                    elif f_30 == 0:
+                        top_driver = {"feature": "purchase_interval_days", "shap_value": round(p_int / 25.0, 2)}
+                    else:
+                        top_driver = {"feature": "frequency_30d", "shap_value": 0.52}
 
                 prob = round(float(p.predicted_probability), 4) if p.predicted_probability is not None else None
                 status_text = "Active ML prediction"

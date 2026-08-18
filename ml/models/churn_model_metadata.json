@@ -1,8 +1,8 @@
 {
-  "optimal_threshold": 0.18,
+  "optimal_threshold": 0.2,
   "is_calibrated": true,
   "cost_ratio": "5:1",
-  "pr_auc": 0.5324747635594969,
-  "roc_auc": 0.7848244620611551,
-  "f1_score": 0.566873339238264
+  "pr_auc": 0.5366331069621311,
+  "roc_auc": 0.7795668932792511,
+  "f1_score": 0.568100358422939
 }

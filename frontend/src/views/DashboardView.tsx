@@ -207,13 +207,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="glass-card stat-card" style={{ borderColor: "rgba(249, 115, 22, 0.3)" }}>
           <div className="stat-label">
-            <span>At-Risk Percentage</span>
+            <span>At-Risk Accounts</span>
             <ShieldAlert size={16} color="var(--accent-amber)" />
           </div>
           <div className="stat-value" style={{ color: "#FB923C" }}>
             {kpis?.at_risk_percentage || 0}%
           </div>
-          <div className="stat-sub">Optimal cost-matrix threshold (5:1)</div>
+          <div className="stat-sub">{kpis?.at_risk_customers_count || 0} accounts in declining states</div>
         </div>
 
         <div className="glass-card stat-card" style={{ borderColor: "rgba(16, 185, 129, 0.3)" }}>

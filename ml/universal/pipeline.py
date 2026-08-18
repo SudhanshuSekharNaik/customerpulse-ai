@@ -314,26 +314,55 @@ class UniversalPipelineRunner:
                 obs_customers = set(obs_events["entity_id"].unique())
                 pred_active_customers = set(pred_events["entity_id"].unique())
 
+                CHURN_FEATURE_COLS = [
+                    "recency_days",
+                    "frequency_30d",
+                    "monetary_total",
+                    "aov",
+                    "cart_to_view_ratio",
+                    "conversion_rate",
+                    "purchase_interval_days",
+                    "velocity_7d_30d",
+                ]
+
                 training_rows = []
                 for cid in obs_customers:
                     c_obs = obs_events[obs_events["entity_id"] == cid]
                     last_t = c_obs["timestamp"].max()
+                    first_t = c_obs["timestamp"].min()
                     r_days = max(0.0, (cutoff_time - last_t).total_seconds() / 86400.0)
                     f_cnt = len(c_obs)
+                    f_30d = int((c_obs["timestamp"] >= cutoff_time - timedelta(days=30)).sum())
+                    f_7d = int((c_obs["timestamp"] >= cutoff_time - timedelta(days=7)).sum())
                     m_val = float(c_obs["revenue"].sum())
+                    tx_cnt = int((c_obs["revenue"] > 0).sum()) if "revenue" in c_obs.columns else f_cnt
+                    views_cnt = int((c_obs["event_type"] == "view").sum()) if "event_type" in c_obs.columns else 0
+                    carts_cnt = int((c_obs["event_type"].isin(["cart", "add_to_cart", "addtocart"])).sum()) if "event_type" in c_obs.columns else 0
+                    
+                    aov_val = round(m_val / max(1, tx_cnt), 2) if tx_cnt > 0 else 0.0
+                    cart_ratio = round(carts_cnt / max(1, views_cnt), 4) if views_cnt > 0 else 0.0
+                    conv_rate = round(tx_cnt / max(1, f_cnt), 4)
+                    p_interval = round((last_t - first_t).total_seconds() / (86400.0 * max(1, tx_cnt - 1)), 1) if tx_cnt > 1 else round(r_days, 1)
+                    vel_val = round(f_7d / max(1.0, f_30d / 4.0), 2) if f_30d > 0 else 0.0
+
                     # Target: 1 = Churned (no transactions in prediction window), 0 = Active
                     churned = 1 if cid not in pred_active_customers else 0
                     training_rows.append({
                         "customer_id": cid,
                         "recency_days": r_days,
-                        "frequency": f_cnt,
-                        "monetary": m_val,
+                        "frequency_30d": f_30d,
+                        "monetary_total": m_val,
+                        "aov": aov_val,
+                        "cart_to_view_ratio": cart_ratio,
+                        "conversion_rate": conv_rate,
+                        "purchase_interval_days": p_interval,
+                        "velocity_7d_30d": vel_val,
                         "churn_target": churned,
                     })
 
                 tr_df = pd.DataFrame(training_rows)
                 if len(tr_df) >= 20 and tr_df["churn_target"].nunique() >= 2:
-                    X_tr = tr_df[["recency_days", "frequency", "monetary"]].values
+                    X_tr = tr_df[CHURN_FEATURE_COLS].fillna(0.0).values
                     y_tr = tr_df["churn_target"].values
 
                     clf = lgb.LGBMClassifier(n_estimators=40, max_depth=3, learning_rate=0.08, random_state=42, verbose=-1)
@@ -372,7 +401,6 @@ class UniversalPipelineRunner:
 
                     # Explainability via TreeSHAP
                     explainer = shap.TreeExplainer(clf)
-                    shap_values = explainer.shap_values(X_tr)
 
                     model_results.append({
                         "model_name": "Time-Aware Churn Classifier (LightGBM)",
@@ -386,26 +414,36 @@ class UniversalPipelineRunner:
                         "details": f"Cost-calibrated at threshold {best_th:.2f} (5:1 loss ratio). Tested on unseen temporal split with {len(tr_df)} accounts.",
                     })
 
-                    # Score all current entities using their latest features
-                    X_latest = feat_df[["recency_days", "frequency", "monetary_total"]].values
+                    # Score all current entities using their latest feature vectors
+                    X_latest = feat_df[CHURN_FEATURE_COLS].fillna(0.0).values
                     latest_probs = clf.predict_proba(X_latest)[:, 1]
-                    latest_shap = explainer.shap_values(X_latest)
+                    raw_shap = explainer.shap_values(X_latest)
 
-                    for idx, row_f in feat_df.iterrows():
-                        prob = float(latest_probs[idx])
+                    if isinstance(raw_shap, list) and len(raw_shap) >= 2:
+                        shap_matrix = np.array(raw_shap[1])  # Class 1 (churn)
+                    elif isinstance(raw_shap, np.ndarray) and len(raw_shap.shape) == 3:
+                        shap_matrix = raw_shap[:, :, 1]
+                    elif isinstance(raw_shap, np.ndarray):
+                        shap_matrix = raw_shap
+                    else:
+                        shap_matrix = np.zeros_like(X_latest)
+
+                    for i, (_, row_f) in enumerate(feat_df.iterrows()):
+                        prob = float(latest_probs[i])
                         c_id_str = str(row_f["customer_id"])
                         is_cold = bool(row_f.get("is_cold_start", False))
-                        shap_row = latest_shap[idx] if isinstance(latest_shap, np.ndarray) and len(latest_shap.shape) == 2 else latest_shap[1][idx] if isinstance(latest_shap, list) else [0, 0, 0]
+                        
+                        customer_shap_dict = {}
+                        if not is_cold:
+                            for f_idx, f_name in enumerate(CHURN_FEATURE_COLS):
+                                customer_shap_dict[f_name] = round(float(shap_matrix[i, f_idx]), 3)
+
                         churn_predictions_map[c_id_str] = {
                             "predicted_class": "NEW_CUSTOMER" if is_cold else "CHURN_RISK" if prob >= best_th else "STABLE",
                             "predicted_probability": None if is_cold else round(prob, 3),
                             "decision_threshold": best_th,
                             "is_cold_start": is_cold,
-                            "shap_values": {} if is_cold else {
-                                "recency_days": round(float(shap_row[0]), 3),
-                                "frequency": round(float(shap_row[1]), 3),
-                                "monetary": round(float(shap_row[2]), 3),
-                            },
+                            "shap_values": customer_shap_dict,
                         }
             else:
                 # Heuristic deterministic risk scoring without fabricating model metrics
