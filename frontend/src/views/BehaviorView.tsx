@@ -146,7 +146,13 @@ export const BehaviorView: React.FC<BehaviorViewProps> = ({ onSelectCustomer }) 
                   <td style={{ fontFamily: "var(--font-mono)" }}>{c.baseline_value.toFixed(2)}</td>
                   <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{c.current_value.toFixed(2)}</td>
                   <td style={{ fontWeight: 700, color: c.pct_change < 0 ? "#EF4444" : "var(--accent-emerald)" }}>
-                    {c.pct_change > 0 ? "+" : ""}{c.pct_change.toFixed(1)}%
+                    {Math.abs(c.baseline_value) < 0.05 ? (
+                      <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+                        {c.current_value >= c.baseline_value ? "+" : ""}{(c.current_value - c.baseline_value).toFixed(2)} (abs)
+                      </span>
+                    ) : (
+                      `${c.pct_change > 0 ? "+" : ""}${c.pct_change.toFixed(1)}%`
+                    )}
                   </td>
                   <td style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
                     {c.detection_method}

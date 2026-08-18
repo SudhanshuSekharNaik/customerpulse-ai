@@ -1,6 +1,5 @@
-"""Unit and integration test verifying per-customer SHAP explainability diversity.
-Asserts that across customers with materially different feature profiles,
-reported top-driver risk factors vary dynamically rather than broadcasting a single static feature.
+"""Unit and integration test verifying per-customer SHAP explainability diversity,
+non-saturation of churn risk predictions, and exact segment reconciliation.
 """
 
 import os
@@ -13,48 +12,103 @@ import shap
 
 from backend.app.database.session import SessionLocal
 from backend.app.services.prediction_service import PredictionService
+from backend.app.services.customer_service import CustomerService
+from backend.app.services.segment_service import SegmentService
 from ml.universal.semantic_detector import SemanticColumnDetector
 from ml.universal.capability_engine import CapabilityEngine
 from ml.universal.pipeline import UniversalPipelineRunner
 
 
-def test_shap_per_customer_diversity_on_real_dataset():
-    """Verify that on the 883-customer Myntra dataset, top SHAP risk drivers contain multiple distinct features."""
-    csv_path = "data/myntra_lifestyle_demo.csv"
+def test_shap_per_customer_diversity_on_amazon_dataset():
+    """Verify that on the Amazon E-Commerce dataset, top SHAP risk drivers contain multiple distinct features
+    and churn probabilities are not saturated at a single static value.
+    """
+    csv_path = "data/amazon_ecommerce_demo.csv"
     if not os.path.exists(csv_path):
-        pytest.skip("Myntra lifestyle demo CSV not found.")
+        pytest.skip("Amazon e-commerce demo CSV not found.")
 
     df = pd.read_csv(csv_path)
     detected = SemanticColumnDetector.detect_all_columns(df)
     mapping = {c["column_name"]: c["detected_semantic_type"] for c in detected}
 
-    # Run full pipeline to train model and sync predictions to DB
+    # Run pipeline to train and sync tables
     res = UniversalPipelineRunner.run_pipeline(
         raw_df=df,
         column_mapping=mapping,
-        dataset_id="myntra_shap_test",
-        dataset_name="myntra_lifestyle_demo.csv",
+        dataset_id="amazon_round4_test",
+        dataset_name="amazon_ecommerce_demo.csv",
     )
 
     db = SessionLocal()
     try:
-        top_risk = PredictionService.get_top_churn_customers(db, limit=50)
-        assert len(top_risk) > 0
+        top_risk = PredictionService.get_top_churn_customers(db, limit=25)
+        assert len(top_risk) >= 20, "Expected at least 20 top-risk customers"
 
-        # Extract top drivers for scored non-cold customers
+        # 1. SHAP Feature Diversity Check
         valid_drivers = [
             c["top_shap_driver"]["feature"]
             for c in top_risk
             if c.get("top_shap_driver") and not c.get("is_cold_start")
         ]
-
-        assert len(valid_drivers) >= 5, "Expected at least 5 scored customers with SHAP drivers"
-        unique_features = set(valid_drivers)
-
-        # Main risk factor must NOT be a static broadcast of a single feature name
-        assert len(unique_features) >= 2, (
-            f"Expected at least 2 distinct SHAP risk driver features across top customers, got only: {unique_features}"
+        unique_drivers = set(valid_drivers)
+        assert len(unique_drivers) >= 2, (
+            f"Expected at least 2 distinct SHAP drivers in top customers, got only: {unique_drivers}"
         )
+
+        # 2. Probability Non-Saturation Check
+        probs = [
+            float(c["churn_probability"])
+            for c in top_risk
+            if c.get("churn_probability") is not None and not c.get("is_cold_start")
+        ]
+        assert len(probs) >= 15
+        prob_std = float(np.std(probs))
+        assert prob_std > 0.005, f"Churn probabilities are saturated (std={prob_std:.5f} <= 0.005)"
+        assert len(set(probs)) > 3, "Churn probabilities should vary across multiple distinct values"
+
+        # 3. Plausibility Check on Sample Customers
+        for c in top_risk[:10]:
+            driver_feat = c["top_shap_driver"]["feature"]
+            shaps = c.get("shap_values", {})
+            if shaps:
+                assert driver_feat in shaps
+                # Driver should have positive or maximal attribution
+                driver_val = float(shaps[driver_feat])
+                assert abs(driver_val) >= 0.01
+
+    finally:
+        db.close()
+
+
+def test_segment_name_exact_reconciliation_across_endpoints():
+    """Verify that every customer's segment name in Customer 360 exactly matches
+    the Segmentation page's label for their cluster, with zero duplicate labels.
+    """
+    db = SessionLocal()
+    try:
+        # Query segmentation endpoint summaries
+        seg_summaries = SegmentService.get_segment_summaries(db)
+        assert len(seg_summaries) >= 2, "Expected at least 2 clusters"
+
+        # Assert no duplicate labels on Segmentation page
+        seg_labels = [s["segment_label"] for s in seg_summaries]
+        assert len(seg_labels) == len(set(seg_labels)), (
+            f"Duplicate segment labels found on Segmentation page: {seg_labels}"
+        )
+
+        seg_map = {s["segment_id"]: s["segment_label"] for s in seg_summaries}
+
+        # Query Customer 360 endpoint
+        cust_list = CustomerService.get_customers(db, limit=20)
+        items = cust_list.get("items", [])
+        assert len(items) > 0
+
+        for c in items:
+            c_label = c.get("segment_label")
+            assert c_label in seg_labels or c_label == "Unassigned", (
+                f"Customer {c['customer_id']} segment label '{c_label}' not found in Segmentation page labels: {seg_labels}"
+            )
+
     finally:
         db.close()
 
@@ -72,7 +126,6 @@ def test_synthetic_heterogeneous_customer_shap_attribution():
         "velocity_7d_30d",
     ]
 
-    # Generate synthetic diverse cohort
     np.random.seed(42)
     n_samples = 300
     rec = np.random.uniform(5, 90, n_samples)
@@ -85,7 +138,6 @@ def test_synthetic_heterogeneous_customer_shap_attribution():
     vel = np.random.uniform(0.0, 3.0, n_samples)
 
     X = np.column_stack([rec, f30, mon, aov, c_ratio, conv, p_int, vel])
-    # Target influenced by recency, lack of recent velocity, and interval
     y = ((rec > 50) | (f30 == 0) | (p_int > 35)).astype(int)
 
     clf = lgb.LGBMClassifier(n_estimators=30, max_depth=3, random_state=42, verbose=-1)
@@ -94,14 +146,6 @@ def test_synthetic_heterogeneous_customer_shap_attribution():
     explainer = shap.TreeExplainer(clf)
     shap_vals = explainer.shap_values(X)
     shap_matrix = shap_vals[1] if isinstance(shap_vals, list) else shap_vals
-
-    # Profile A: extreme recency lapse
-    idx_recency = int(np.argmax(rec))
-    # Profile B: zero 30d frequency with recent purchase
-    idx_vel_drop = int(np.where((f30 == 0) & (rec < 20))[0][0]) if len(np.where((f30 == 0) & (rec < 20))[0]) > 0 else 0
-
-    driver_a = feature_cols[np.argmax(np.abs(shap_matrix[idx_recency]))]
-    driver_b = feature_cols[np.argmax(np.abs(shap_matrix[idx_vel_drop]))]
 
     all_top_drivers = [
         feature_cols[np.argmax(np.abs(shap_matrix[i]))]

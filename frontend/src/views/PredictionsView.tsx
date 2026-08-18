@@ -240,7 +240,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
                       </span>
                     ) : (
                       <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
-                        {c.top_shap_driver?.feature?.replace("_", " ") || "recency days"} ({c.top_shap_driver?.shap_value > 0 ? "+" : ""}{c.top_shap_driver?.shap_value ? Number(c.top_shap_driver.shap_value).toFixed(2) : "+0.45"})
+                        {c.top_shap_driver?.feature ? c.top_shap_driver.feature.replaceAll("_", " ") : "risk factor"} ({c.top_shap_driver?.shap_value > 0 ? "+" : ""}{c.top_shap_driver?.shap_value !== undefined ? Number(c.top_shap_driver.shap_value).toFixed(2) : "0.00"})
                       </span>
                     )}
                   </td>

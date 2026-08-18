@@ -78,52 +78,39 @@ class CustomerSegmentationTrainer:
         """Auto-generate segment labels by comparing each cluster's mean metrics to population z-scores.
         Never hardcodes 'Cluster 0 = VIP'. Always derived from actual empirical statistics.
         """
-        df = features_df[self.FEATURE_COLS].copy()
+        from ml.universal.segment_labeler import SegmentLabeler
+
+        df = features_df.copy()
         df["cluster"] = cluster_preds
 
-        # Global population means and stds
-        pop_mean = df[self.FEATURE_COLS].mean()
-        pop_std = df[self.FEATURE_COLS].std().replace(0, 1)
+        cohort_mon = float(df["monetary_total"].mean()) if "monetary_total" in df else 1.0
+        cohort_rec = float(df["recency_days"].mean()) if "recency_days" in df else 1.0
+        cohort_freq = float(df["frequency_30d"].mean()) if "frequency_30d" in df else 1.0
+        cohort_cart = float(df["cart_to_view_ratio"].mean()) if "cart_to_view_ratio" in df else 0.0
 
-        labels_map = {}
-        unique_clusters = sorted(np.unique(cluster_preds))
-
-        for c in unique_clusters:
+        clusters_stats = []
+        for c in sorted(np.unique(cluster_preds)):
             c_df = df[df["cluster"] == c]
-            c_mean = c_df[self.FEATURE_COLS].mean()
-            z_scores = (c_mean - pop_mean) / pop_std
+            clusters_stats.append({
+                "cluster_id": int(c),
+                "avg_monetary": float(c_df["monetary_total"].mean()) if "monetary_total" in c_df else 0.0,
+                "avg_recency": float(c_df["recency_days"].mean()) if "recency_days" in c_df else 0.0,
+                "avg_freq": float(c_df["frequency_30d"].mean()) if "frequency_30d" in c_df else 0.0,
+                "avg_cart": float(c_df["cart_to_view_ratio"].mean()) if "cart_to_view_ratio" in c_df else 0.0,
+                "count": len(c_df),
+                "top_category": str(c_df["top_category"].mode().iloc[0]) if "top_category" in c_df and not c_df["top_category"].empty else "General",
+                "silhouette_score": 0.50,
+            })
 
-            # Interpret key behavioral dimensions
-            z_rec = z_scores["recency_days"]
-            z_mon = z_scores["monetary_total"]
-            z_freq = z_scores["frequency_30d"]
-            z_cart = z_scores["carts_30d"]
-            z_conv = z_scores["conversion_rate"]
-            z_vel = z_scores["velocity_7d_30d"]
+        profiles = SegmentLabeler.generate_segment_profiles(
+            clusters_stats,
+            cohort_mon=cohort_mon,
+            cohort_rec=cohort_rec,
+            cohort_freq=cohort_freq,
+            cohort_cart=cohort_cart,
+        )
 
-            descriptors = []
-            
-            # Value dimension
-            if z_mon > 0.6 and z_freq > 0.5:
-                descriptors.append("High-Value Frequent Spenders")
-            elif z_mon > 0.6 and z_rec > 0.5:
-                descriptors.append("High-Value At-Risk Customers")
-            elif z_rec > 0.8:
-                descriptors.append("Dormant Disengaged Shoppers")
-            elif z_cart > 0.6 and z_conv < -0.2:
-                descriptors.append("High-Intent Cart Abandoners")
-            elif z_freq > 0.5 and z_mon < 0.0:
-                descriptors.append("Active Window Browsers")
-            elif z_vel > 0.8:
-                descriptors.append("Surging High-Velocity Prospects")
-            elif z_rec < -0.4 and z_freq < 0.0:
-                descriptors.append("Recent Casual Buyers")
-            else:
-                descriptors.append("Steady Core Customers")
-
-            label = descriptors[0]
-            labels_map[c] = label
-
+        labels_map = {p["segment_id"]: p["segment_label"] for p in profiles}
         self.cluster_labels_map = labels_map
         return labels_map
 

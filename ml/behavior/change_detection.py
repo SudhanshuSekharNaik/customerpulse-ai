@@ -204,7 +204,7 @@ class BehaviorChangeDetector:
                     "metric": "Weekly Engagement Trend",
                     "baseline_value": 0.0,
                     "current_value": round(trend, 2),
-                    "pct_change": round(trend * 25.0, 1),
+                    "pct_change": round(trend, 2),  # Absolute delta when baseline is near zero
                     "severity": "MEDIUM",
                     "detection_method": "CHANGE_POINT_SLOPE",
                     "detected_at": datetime.utcnow() - timedelta(hours=int(change_id_counter % 96)),
