@@ -117,6 +117,7 @@ export interface CustomerDetail {
 
 export interface SegmentSummary {
   segment_id: number;
+  segment_name?: string;
   segment_label: string;
   customer_count: number;
   percentage: number;
@@ -126,6 +127,13 @@ export interface SegmentSummary {
   avg_cart_ratio: number;
   top_category: string;
   silhouette_score: number;
+  clustering_basis?: string;
+  spend_pattern?: string;
+  recency_pattern?: string;
+  frequency_pattern?: string;
+  conversion_pattern?: string;
+  key_drivers?: string[];
+  recommended_strategy?: string;
 }
 
 export interface StateSummary {

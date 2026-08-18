@@ -1,26 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { Grid, CheckCircle, BarChart3, Users, Award, ArrowUpRight } from "lucide-react";
+import {
+  Grid,
+  CheckCircle,
+  BarChart3,
+  Users,
+  Award,
+  ArrowRight,
+  Layers,
+  Sparkles,
+  TrendingUp,
+  Target,
+  Clock,
+  ShoppingBag,
+  Zap,
+} from "lucide-react";
 import { api } from "../services/api";
 import { SegmentSummary } from "../types";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-} from "recharts";
 
 interface SegmentsViewProps {
   onSelectCustomer: (customerId: string) => void;
+  onNavigateTab?: (tab: any) => void;
 }
 
-export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer }) => {
+export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, onNavigateTab }) => {
   const [segments, setSegments] = useState<SegmentSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Real multi-K candidate comparison data evaluated by our pipeline
+  // Candidate cluster evaluations assessed by pipeline
   const kCandidates = [
     { k: 3, silhouette: 0.8643, davies_bouldin: 0.3478, calinski: 1461.8, gmm_bic: -9963.77, selected: true },
     { k: 4, silhouette: 0.8238, davies_bouldin: 0.4696, calinski: 2086.09, gmm_bic: -10723.33, selected: false },
@@ -43,30 +49,219 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer }) 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
-      <div className="glass-card" style={{ padding: "20px 24px" }}>
+      <div className="glass-card" style={{ padding: "22px 26px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
-              Customer Groups &amp; Segments
-            </h2>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-              Customers grouped by similar behavior, compared to the average customer
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+              <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(59, 130, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Grid size={18} color="var(--accent-cyan)" />
+              </div>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#FFFFFF" }}>
+                Customer Segments &amp; Behavioral Patterns
+              </h2>
+            </div>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+              Customers automatically clustered by shared purchasing behavior, lifetime spend, and visit recency.
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "6px 12px", borderRadius: "8px", color: "var(--accent-emerald)", fontSize: "0.8rem", fontWeight: 700 }}>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "6px 14px", borderRadius: "8px", color: "var(--accent-emerald)", fontSize: "0.82rem", fontWeight: 700 }}>
             <Award size={16} />
-            <span>Best Setup: 3 Groups (Distinctness: 0.86)</span>
+            <span>Optimal Partitioning: {segments.length || 3} Distinct Behavioral Segments</span>
           </div>
         </div>
+      </div>
+
+      {/* Cluster Profiles Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
+        {segments.map((s, idx) => {
+          const isVip = s.segment_label.includes("VIP") || s.segment_label.includes("Champion");
+          const isAtRisk = s.segment_label.includes("Risk") || s.segment_label.includes("Dormant");
+          const accentColor = isVip ? "var(--accent-emerald)" : isAtRisk ? "var(--accent-amber)" : "var(--accent-cyan)";
+          const bgGlow = isVip ? "rgba(16, 185, 129, 0.04)" : isAtRisk ? "rgba(245, 158, 11, 0.04)" : "rgba(6, 182, 212, 0.04)";
+
+          return (
+            <div
+              key={s.segment_id}
+              className="glass-card"
+              style={{
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                background: `linear-gradient(180deg, ${bgGlow} 0%, rgba(13, 18, 29, 0.95) 100%)`,
+                border: `1px solid ${isVip ? "rgba(16, 185, 129, 0.35)" : isAtRisk ? "rgba(245, 158, 11, 0.35)" : "rgba(59, 130, 246, 0.25)"}`,
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
+              }}
+            >
+              <div>
+                {/* Segment Header Badge & Population Share */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      color: accentColor,
+                      background: `rgba(255, 255, 255, 0.06)`,
+                      border: `1px solid ${accentColor}40`,
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      letterSpacing: "0.04em",
+                    }}>
+                      Segment #{idx + 1}
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#FFFFFF", background: "rgba(255, 255, 255, 0.04)", padding: "4px 10px", borderRadius: "6px" }}>
+                    <strong style={{ color: accentColor }}>{s.percentage}%</strong> &middot; {s.customer_count?.toLocaleString()} accounts
+                  </span>
+                </div>
+
+                {/* Friendly Title */}
+                <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "14px", letterSpacing: "-0.01em" }}>
+                  {s.segment_label}
+                </h3>
+
+                {/* Clustering Basis & Pattern Narrative Box */}
+                <div style={{
+                  padding: "14px",
+                  borderRadius: "10px",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid var(--border-subtle)",
+                  marginBottom: "16px",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                    <Layers size={15} color="var(--accent-cyan)" />
+                    <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--accent-cyan)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Clustering Pattern &amp; Basis
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.82rem", color: "var(--text-primary)", lineHeight: 1.45, margin: 0 }}>
+                    {s.clustering_basis || `Grouped together based on characteristic average spend of ₹${s.avg_revenue?.toFixed(2)} and ${s.avg_recency_days?.toFixed(1)} days since last purchase.`}
+                  </p>
+                </div>
+
+                {/* Metrics Breakdown Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", marginBottom: "16px" }}>
+                  <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "2px" }}>Average Spend</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--accent-emerald)" }}>
+                      ₹{s.avg_revenue?.toLocaleString()}
+                    </div>
+                    {s.spend_pattern && (
+                      <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                        {s.spend_pattern}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "2px" }}>Visit Recency</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "#FFFFFF" }}>
+                      {s.avg_recency_days?.toFixed(1)} days
+                    </div>
+                    {s.recency_pattern && (
+                      <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                        {s.recency_pattern}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "2px" }}>30-Day Frequency</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--accent-blue)" }}>
+                      {s.avg_frequency_30d?.toFixed(1)} orders
+                    </div>
+                    {s.frequency_pattern && (
+                      <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                        {s.frequency_pattern}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "2px" }}>Top Category</div>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--accent-cyan)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {s.top_category || "Multi-Category"}
+                    </div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                      Dominant affinity
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Drivers Badges */}
+                {s.key_drivers && s.key_drivers.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "6px" }}>
+                      Key Driving Factors
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {s.key_drivers.map((drv, dIdx) => (
+                        <span key={dIdx} style={{
+                          fontSize: "0.72rem",
+                          background: "rgba(255, 255, 255, 0.04)",
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          color: "var(--text-secondary)",
+                        }}>
+                          {drv}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommended Action Strategy */}
+                {s.recommended_strategy && (
+                  <div style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(59, 130, 246, 0.08)",
+                    border: "1px solid rgba(59, 130, 246, 0.25)",
+                    marginBottom: "16px",
+                  }}>
+                    <div style={{ fontSize: "0.7rem", fontWeight: 800, color: "#93C5FD", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <Zap size={12} color="#93C5FD" />
+                      <span>Recommended Action Strategy</span>
+                    </div>
+                    <div style={{ fontSize: "0.78rem", color: "#FFFFFF", lineHeight: 1.4 }}>
+                      {s.recommended_strategy}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* View Customers Action Button */}
+              <button
+                className="btn-secondary"
+                onClick={() => onNavigateTab && onNavigateTab("customers")}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  fontSize: "0.8rem",
+                  justifyContent: "center",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  marginTop: "4px",
+                }}
+              >
+                <span>Explore Customers in {s.segment_label}</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Multi-K Candidate Search Table */}
       <div className="glass-card" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "6px" }}>
-          Finding the best number of customer groups
+          Unsupervised Model Quality &amp; Group Search (Silhouette Optimization)
         </h3>
         <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "14px" }}>
-          We tested grouping your customers into 3, 4, 5, or 6 groups to find which split produces the clearest, most distinct customer profiles.
+          We mathematically evaluated splitting your active dataset into 3, 4, 5, or 6 clusters to verify cluster compactness and distinctness.
         </p>
 
         <table className="data-table">
@@ -108,51 +303,7 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer }) 
           </tbody>
         </table>
       </div>
-
-      {/* Cluster Profiles Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-        {segments.map((s) => (
-          <div key={s.segment_id} className="glass-card" style={{ padding: "20px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-blue)", background: "rgba(59, 130, 246, 0.12)", padding: "3px 8px", borderRadius: "6px" }}>
-                  Cluster {s.segment_id}
-                </span>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--accent-emerald)" }}>
-                  {s.percentage}% ({s.customer_count} users)
-                </span>
-              </div>
-
-              <h4 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "8px" }}>
-                {s.segment_label}
-              </h4>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: "16px 0", fontSize: "0.82rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.04)", paddingBottom: "4px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Avg Historical Spend</span>
-                  <strong style={{ color: "var(--accent-emerald)" }}>₹{s.avg_revenue?.toFixed(2)}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.04)", paddingBottom: "4px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Avg Recency</span>
-                  <strong>{s.avg_recency_days?.toFixed(1)} days</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.04)", paddingBottom: "4px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Avg 30d Events</span>
-                  <strong>{s.avg_frequency_30d?.toFixed(1)} events</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Top Preferred Category</span>
-                  <strong style={{ fontFamily: "var(--font-mono)", color: "var(--accent-cyan)" }}>{s.top_category || "General"}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", background: "rgba(255, 255, 255, 0.02)", padding: "8px 10px", borderRadius: "6px" }}>
-              Label derived from standardized z-score deviation against global cohort.
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
+

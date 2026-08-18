@@ -121,7 +121,7 @@ class CustomerSegmentationTrainer:
             else:
                 descriptors.append("Steady Core Customers")
 
-            label = f"Cluster {c}: {descriptors[0]}"
+            label = descriptors[0]
             labels_map[c] = label
 
         self.cluster_labels_map = labels_map

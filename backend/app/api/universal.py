@@ -125,6 +125,7 @@ def confirm_and_analyze(
         raw_df=df,
         column_mapping=req.column_mapping,
         dataset_name=ds.filename,
+        dataset_id=ds.dataset_id,
     )
 
     # Deactivate other datasets
@@ -293,16 +294,39 @@ def switch_analysis_mode(
             detected = SemanticColumnDetector.detect_all_columns(df_preset)
             mapping = {c["column_name"]: c["detected_semantic_type"] for c in detected}
             dataset_id = f"ds_preset_{target_preset['preset_id'].lower()}"
-            UniversalPipelineRunner.run_pipeline(df_preset, mapping, target_preset["filename"], dataset_id=dataset_id)
+            report = UniversalPipelineRunner.run_pipeline(df_preset, mapping, target_preset["filename"], dataset_id=dataset_id)
             
-            # Set this preset dataset as active in database
+            # Upsert this preset dataset as active in UploadedDataset table
             db.query(UploadedDataset).update({UploadedDataset.is_active: False})
             ds_rec = db.query(UploadedDataset).filter(UploadedDataset.dataset_id == dataset_id).first()
-            if ds_rec:
+            if not ds_rec:
+                ds_rec = UploadedDataset(
+                    dataset_id=dataset_id,
+                    filename=target_preset["filename"],
+                    dataset_mode=report.get("dataset_mode", "CUSTOMER_TRANSACTION"),
+                    domain=target_preset.get("domain", "E-Commerce & Retail"),
+                    mode_label=target_preset["name"],
+                    row_count=len(df_preset),
+                    col_count=len(df_preset.columns),
+                    column_mapping_json=json.dumps(mapping),
+                    capabilities_json=json.dumps(report.get("capabilities", {})),
+                    report_json=json.dumps(report),
+                    raw_csv_path=csv_path,
+                    status="ANALYZED",
+                    is_active=True,
+                    analyzed_at=datetime.utcnow(),
+                )
+                db.add(ds_rec)
+            else:
                 ds_rec.is_active = True
                 ds_rec.mode_label = target_preset["name"]
                 ds_rec.filename = target_preset["filename"]
-                db.commit()
+                ds_rec.row_count = len(df_preset)
+                ds_rec.report_json = json.dumps(report)
+                ds_rec.capabilities_json = json.dumps(report.get("capabilities", {}))
+                ds_rec.status = "ANALYZED"
+                ds_rec.analyzed_at = datetime.utcnow()
+            db.commit()
         except Exception as e:
             print(f"Warning running preset pipeline for {target_preset['name']}: {e}")
 
@@ -328,7 +352,10 @@ def switch_analysis_mode(
             try:
                 mapping = json.loads(ds.column_mapping_json)
                 profile_res = DatasetProfiler.load_and_profile_csv(ds.raw_csv_path, filename=ds.filename)
-                UniversalPipelineRunner.run_pipeline(profile_res["dataframe"], mapping, ds.filename, dataset_id=ds.dataset_id)
+                report = UniversalPipelineRunner.run_pipeline(profile_res["dataframe"], mapping, ds.filename, dataset_id=ds.dataset_id)
+                ds.report_json = json.dumps(report)
+                ds.analyzed_at = datetime.utcnow()
+                db.commit()
             except Exception as e:
                 print(f"Warning re-syncing uploaded dataset: {e}")
 

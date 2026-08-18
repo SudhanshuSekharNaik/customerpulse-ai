@@ -214,9 +214,11 @@ class UniversalPipelineRunner:
                 best_k = 1
                 best_sil = 0.50
 
-            # Derive Grounded Cluster Labels from Actual Centroid Statistics
+            # Derive Grounded Cluster Labels & Patterns from Actual Centroid Statistics
             overall_avg_mon = float(feat_df["monetary_total"].mean())
             overall_avg_rec = float(feat_df["recency_days"].mean())
+            overall_avg_freq = float(feat_df["frequency"].mean())
+            overall_avg_cart = float(feat_df["cart_to_view_ratio"].mean())
 
             for c_id in range(best_k):
                 c_mask = feat_df["cluster"] == c_id
@@ -225,22 +227,52 @@ class UniversalPipelineRunner:
                 c_mon = float(c_df["monetary_total"].mean()) if not c_df.empty else 0.0
                 c_rec = float(c_df["recency_days"].mean()) if not c_df.empty else 0.0
                 c_freq = float(c_df["frequency"].mean()) if not c_df.empty else 1.0
+                c_cart = float(c_df["cart_to_view_ratio"].mean()) if not c_df.empty else 0.0
                 top_cat_c = str(c_df["top_category"].mode().iloc[0]) if not c_df.empty and not c_df["top_category"].empty else "General"
 
-                # Data-driven label derivation
-                if c_mon >= overall_avg_mon * 1.5 and c_rec <= overall_avg_rec:
-                    c_label = f"Cluster {c_id}: High-Value Active VIPs"
-                elif c_mon >= overall_avg_mon * 1.2 and c_rec > overall_avg_rec:
-                    c_label = f"Cluster {c_id}: High-Value Lapsed Accounts"
-                elif c_freq >= float(feat_df["frequency"].mean()) * 1.3:
-                    c_label = f"Cluster {c_id}: High-Frequency Repeat Shoppers"
-                elif c_rec > overall_avg_rec * 1.3:
-                    c_label = f"Cluster {c_id}: Dormant / Low-Engagement Accounts"
+                mon_diff_pct = ((c_mon - overall_avg_mon) / max(1.0, overall_avg_mon)) * 100.0
+                rec_diff_pct = ((c_rec - overall_avg_rec) / max(1.0, overall_avg_rec)) * 100.0
+                freq_diff_pct = ((c_freq - overall_avg_freq) / max(1.0, overall_avg_freq)) * 100.0
+
+                mon_diff_str = f"+{mon_diff_pct:.0f}%" if mon_diff_pct >= 0 else f"{mon_diff_pct:.0f}%"
+                rec_diff_str = f"+{rec_diff_pct:.0f}%" if rec_diff_pct >= 0 else f"{rec_diff_pct:.0f}%"
+                freq_diff_str = f"+{freq_diff_pct:.0f}%" if freq_diff_pct >= 0 else f"{freq_diff_pct:.0f}%"
+
+                # Simplified human-friendly label derivation and clustering pattern explanations
+                if c_mon >= overall_avg_mon * 1.35 and c_rec <= overall_avg_rec:
+                    c_label = "VIP Champions"
+                    basis = f"Clustered by High Lifetime Spend (₹{c_mon:,.2f}, {mon_diff_str} vs avg) & Frequent Recent Visits ({c_rec:.1f}d recency). Top revenue power buyers."
+                    strategy = "Enroll in VIP Prime Loyalty Tier, grant early festival sale access, and offer dedicated support."
+                    drivers = [f"Spend: ₹{c_mon:,.2f} ({mon_diff_str} vs avg)", f"Recency: {c_rec:.1f} days (Highly Active)", f"Category Affinity: {top_cat_c}"]
+                elif c_mon >= overall_avg_mon * 1.15 and c_rec > overall_avg_rec:
+                    c_label = "At-Risk High Spenders"
+                    basis = f"Clustered by High Past Spend (₹{c_mon:,.2f}) combined with Long Inactivity ({c_rec:.1f}d, {rec_diff_str} dormant). Valuable accounts sliding toward churn."
+                    strategy = "Deploy urgent personalized 15% win-back discount vouchers before the 45-day churn cliff."
+                    drivers = [f"Inactivity: {c_rec:.1f} days ({rec_diff_str} vs avg)", f"Past Spend: ₹{c_mon:,.2f}", f"Urgency: Churn Prevention"]
+                elif c_freq >= overall_avg_freq * 1.25:
+                    c_label = "Frequent Repeat Shoppers"
+                    basis = f"Clustered by High Repeat Purchase Velocity ({c_freq:.1f} transactions, {freq_diff_str} vs avg) with steady engagement in {top_cat_c}."
+                    strategy = "Cross-sell trending accessories and offer subscription multi-pack bundles."
+                    drivers = [f"Order Velocity: {c_freq:.1f} events ({freq_diff_str} vs avg)", f"Category: {top_cat_c}", f"Engagement: High Repeat"]
+                elif c_rec > overall_avg_rec * 1.25:
+                    c_label = "Dormant / Lapsed Shoppers"
+                    basis = f"Clustered by Extended Inactivity ({c_rec:.1f} days since last visit) and low engagement frequency."
+                    strategy = "Re-engage via seasonal flash-sale notifications and price-drop alerts on viewed items."
+                    drivers = [f"Recency: {c_rec:.1f} days without purchases", f"Historical Spend: ₹{c_mon:,.2f}", f"Strategy: Reactivation"]
+                elif c_cart >= overall_avg_cart * 1.25:
+                    c_label = "High-Intent Window Browsers"
+                    basis = f"Clustered by High Browse & Add-to-Cart Activity with moderate checkout conversion. Strong interest in {top_cat_c}."
+                    strategy = "Trigger limited-time cart checkout countdown discounts and free shipping perks."
+                    drivers = [f"Cart Ratio: {c_cart*100:.1f}%", f"Browsing: High Intent", f"Category: {top_cat_c}"]
                 else:
-                    c_label = f"Cluster {c_id}: Core Steady Customer Base"
+                    c_label = "Core Steady Customers"
+                    basis = f"Clustered by Balanced Spend (₹{c_mon:,.2f}) and Standard Inactivity ({c_rec:.1f}d). Forms the steady operational foundation."
+                    strategy = "Nurture with standard rewards points, product discovery recommendations, and review incentives."
+                    drivers = [f"Spend: ₹{c_mon:,.2f} (Cohort Average)", f"Recency: {c_rec:.1f} days", f"Category: {top_cat_c}"]
 
                 segment_summaries.append({
                     "segment_id": c_id,
+                    "segment_name": c_label,
                     "segment_label": c_label,
                     "customer_count": c_count,
                     "percentage": round((c_count / max(1, n_entities)) * 100.0, 1),
@@ -250,6 +282,12 @@ class UniversalPipelineRunner:
                     "avg_cart_ratio": round(float(c_df["cart_to_view_ratio"].mean()) if not c_df.empty else 0.0, 3),
                     "top_category": top_cat_c,
                     "silhouette_score": round(best_sil, 3),
+                    "clustering_basis": basis,
+                    "spend_pattern": f"₹{c_mon:,.2f} ({mon_diff_str} vs avg)",
+                    "recency_pattern": f"{c_rec:.1f} days ({rec_diff_str} vs avg)",
+                    "frequency_pattern": f"{c_freq:.1f} events ({freq_diff_str} vs avg)",
+                    "key_drivers": drivers,
+                    "recommended_strategy": strategy,
                 })
 
             model_results.append({
@@ -446,6 +484,16 @@ class UniversalPipelineRunner:
             aov_cohort = total_rev / max(1, len(canonical_df))
             key_insights.append(f"Total Cohort Sales Revenue: ₹{total_rev:,.2f} with Average Transaction Value of ₹{aov_cohort:,.2f}.")
             key_insights.append(f"Optimal Segmentation: Partitioned population into {best_k} data-driven cohorts (Silhouette: {best_sil:.3f}).")
+
+            # Synchronize operational database tables with newly processed customer dataset
+            cls._sync_to_database(
+                canonical_df=canonical_df,
+                feat_df=feat_df,
+                segment_summaries=segment_summaries,
+                churn_predictions_map=churn_predictions_map,
+                capabilities=capabilities,
+                dataset_id=dataset_id,
+            )
 
         # -------------------------------------------------------------
         # BRANCH B: Generic Tabular Dataset Profiling
@@ -762,7 +810,8 @@ class UniversalPipelineRunner:
                 aov_val = float(r["aov"])
                 cat = str(r["top_category"])
                 cat_margin = CATEGORY_MARGINS.get(cat, 0.25)
-                p_risk = churn_predictions_map.get(cid, {}).get("predicted_probability", 0.15)
+                p_risk_raw = churn_predictions_map.get(cid, {}).get("predicted_probability")
+                p_risk = float(p_risk_raw) if p_risk_raw is not None else 0.15
 
                 if p_risk >= 0.60 or rec > 45.0:
                     action = "WIN_BACK"

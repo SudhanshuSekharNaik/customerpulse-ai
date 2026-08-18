@@ -132,7 +132,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic View Body */}
-        <main className="page-body">
+        <main className="page-body" key={`${activeContext?.dataset_id || activeContext?.dataset_name || 'dataset'}_${activeContext?.active_mode || 'mode'}`}>
           {currentTab === "dashboard" && (
             isGenericMode && latestReport ? (
               <GenericAnalyticsView report={latestReport} />
@@ -156,7 +156,10 @@ export const App: React.FC = () => {
           )}
 
           {currentTab === "segments" && (
-            <SegmentsView onSelectCustomer={handleSelectCustomer} />
+            <SegmentsView
+              onSelectCustomer={handleSelectCustomer}
+              onNavigateTab={setCurrentTab}
+            />
           )}
 
           {currentTab === "states" && <StatesView />}
