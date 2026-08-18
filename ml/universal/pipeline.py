@@ -398,19 +398,57 @@ class UniversalPipelineRunner:
                         is_cold = bool(row_f.get("is_cold_start", False))
                         
                         customer_shap_dict = {}
+                        pos_drivers = []
+                        prot_drivers = []
+                        feat_vals = {}
+
                         if not is_cold:
                             for f_idx, f_name in enumerate(CHURN_FEATURE_COLS):
-                                customer_shap_dict[f_name] = round(float(shap_matrix[i, f_idx]), 3)
+                                val_shap = round(float(shap_matrix[i, f_idx]), 4)
+                                customer_shap_dict[f_name] = val_shap
+                                if val_shap > 0:
+                                    pos_drivers.append({"feature": f_name, "shap_value": val_shap, "direction": "increases_risk"})
+                                elif val_shap < 0:
+                                    prot_drivers.append({"feature": f_name, "shap_value": val_shap, "direction": "decreases_risk"})
+
+                            pos_drivers.sort(key=lambda x: x["shap_value"], reverse=True)
+                            prot_drivers.sort(key=lambda x: x["shap_value"])
+                            top_3_pos = pos_drivers[:3]
+                            top_3_prot = prot_drivers[:3]
+                            all_drivers = top_3_pos + top_3_prot
+                            all_drivers.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+
+                            top_factor = {"feature": top_3_pos[0]["feature"], "shap_value": top_3_pos[0]["shap_value"]} if top_3_pos else (
+                                {"feature": all_drivers[0]["feature"], "shap_value": all_drivers[0]["shap_value"]} if all_drivers else None
+                            )
+
+                            feat_vals = {
+                                col: round(float(row_f[col]), 3) if isinstance(row_f.get(col), (int, float, np.number)) else str(row_f.get(col, ""))
+                                for col in CHURN_FEATURE_COLS
+                                if col in row_f and pd.notnull(row_f[col])
+                            }
+
+                            shap_payload = {
+                                "shap_values": customer_shap_dict,
+                                "drivers": all_drivers,
+                                "top_risk_factor": top_factor,
+                                "positive_drivers": top_3_pos,
+                                "protective_drivers": top_3_prot,
+                                "feature_values": feat_vals,
+                            }
+                        else:
+                            shap_payload = {}
 
                         churn_predictions_map[c_id_str] = {
                             "predicted_class": "NEW_CUSTOMER" if is_cold else "CHURN_RISK" if prob >= best_th else "STABLE",
-                            "predicted_probability": None if is_cold else round(prob, 3),
+                            "predicted_probability": None if is_cold else round(prob, 4),
                             "decision_threshold": best_th,
                             "is_cold_start": is_cold,
                             "shap_values": customer_shap_dict,
+                            "shap_payload": shap_payload,
                         }
             else:
-                # Heuristic deterministic risk scoring without fabricating model metrics
+                # Deterministic data-driven baseline
                 os.makedirs("ml/models", exist_ok=True)
                 with open("ml/models/churn_model_metadata.json", "w") as f_meta:
                     json.dump({
@@ -422,13 +460,14 @@ class UniversalPipelineRunner:
                 for idx, row_f in feat_df.iterrows():
                     rec = float(row_f["recency_days"])
                     is_cold = bool(row_f.get("is_cold_start", False))
-                    p_risk = min(0.95, max(0.05, round(rec / max(30.0, total_span_days), 2)))
+                    p_risk = min(0.95, max(0.05, round(rec / max(30.0, total_span_days), 4)))
                     churn_predictions_map[str(row_f["customer_id"])] = {
                         "predicted_class": "NEW_CUSTOMER" if is_cold else "CHURN_RISK" if p_risk >= 0.50 else "STABLE",
                         "predicted_probability": None if is_cold else p_risk,
                         "decision_threshold": 0.50,
                         "is_cold_start": is_cold,
                         "shap_values": {},
+                        "shap_payload": {},
                     }
 
             # A.4. Product Co-Occurrence & Affinity Matrix
@@ -744,12 +783,15 @@ class UniversalPipelineRunner:
             pred_objs = []
             for i, r in feat_df.iterrows():
                 cid = str(r["customer_id"])
-                p_data = churn_predictions_map.get(cid, {"predicted_probability": 0.15, "predicted_class": "STABLE", "shap_values": {}})
+                p_data = churn_predictions_map.get(cid, {"predicted_probability": 0.15, "predicted_class": "STABLE", "shap_values": {}, "shap_payload": {}})
                 is_cold = bool(r.get("is_cold_start", False) or p_data.get("is_cold_start", False))
                 prob_raw = p_data.get("predicted_probability")
                 prob = float(prob_raw) if (prob_raw is not None and not is_cold) else None
                 decision_th = float(p_data.get("decision_threshold", 0.50))
                 
+                payload = p_data.get("shap_payload") or p_data.get("shap_values") or {}
+                shap_json = "{}" if is_cold else json.dumps(payload)
+
                 pred_objs.append(Prediction(
                     prediction_id=f"pred_ch_{i+1:07d}",
                     customer_id=cid,
@@ -759,7 +801,7 @@ class UniversalPipelineRunner:
                     predicted_probability=prob,
                     pr_auc_at_eval=0.7447,
                     decision_threshold=decision_th,
-                    shap_values_json="{}" if is_cold else json.dumps(p_data.get("shap_values", {})),
+                    shap_values_json=shap_json,
                     confidence_interval_low=None if is_cold else round(max(0.0, (prob or 0.5) - 0.05), 3),
                     confidence_interval_high=None if is_cold else round(min(1.0, (prob or 0.5) + 0.05), 3),
                 ))

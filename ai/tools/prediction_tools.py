@@ -22,9 +22,15 @@ class PredictionTools:
                 "customer_id": customer_id,
                 "predicted_class": pred.predicted_class,
                 "predicted_probability": pred.predicted_probability,
+                "churn_probability": pred.predicted_probability,
                 "decision_threshold": pred.decision_threshold,
                 "confidence_interval_95": [pred.confidence_interval_low, pred.confidence_interval_high],
+                "top_risk_factor": pred.top_risk_factor,
+                "drivers": pred.drivers,
+                "positive_drivers": pred.positive_drivers,
+                "protective_drivers": pred.protective_drivers,
                 "top_shap_factors": pred.shap_values,
+                "feature_values": pred.feature_values,
             }
         finally:
             db.close()

@@ -193,12 +193,75 @@ class Prediction(Base):
     customer = relationship("Customer", back_populates="predictions")
 
     @property
-    def shap_values(self):
+    def shap_payload(self):
         if self.shap_values_json:
             try:
                 return json.loads(self.shap_values_json)
             except Exception:
                 return {}
+        return {}
+
+    @property
+    def shap_values(self):
+        payload = self.shap_payload
+        if isinstance(payload, dict):
+            if "shap_values" in payload and isinstance(payload["shap_values"], dict):
+                return payload["shap_values"]
+            return payload
+        return {}
+
+    @property
+    def drivers(self):
+        payload = self.shap_payload
+        if isinstance(payload, dict) and "drivers" in payload and isinstance(payload["drivers"], list):
+            return payload["drivers"]
+        
+        # Derive dynamically from flat shap_values if legacy record
+        shaps = self.shap_values
+        if not shaps or not isinstance(shaps, dict):
+            return []
+        
+        derived = []
+        for feat, val in sorted(shaps.items(), key=lambda x: abs(float(x[1])), reverse=True):
+            f_val = float(val)
+            derived.append({
+                "feature": str(feat),
+                "shap_value": round(f_val, 4),
+                "direction": "increases_risk" if f_val > 0 else "decreases_risk",
+            })
+        return derived
+
+    @property
+    def positive_drivers(self):
+        payload = self.shap_payload
+        if isinstance(payload, dict) and "positive_drivers" in payload and isinstance(payload["positive_drivers"], list):
+            return payload["positive_drivers"]
+        return [d for d in self.drivers if d["direction"] == "increases_risk"][:3]
+
+    @property
+    def protective_drivers(self):
+        payload = self.shap_payload
+        if isinstance(payload, dict) and "protective_drivers" in payload and isinstance(payload["protective_drivers"], list):
+            return payload["protective_drivers"]
+        return [d for d in self.drivers if d["direction"] == "decreases_risk"][:3]
+
+    @property
+    def top_risk_factor(self):
+        payload = self.shap_payload
+        if isinstance(payload, dict) and "top_risk_factor" in payload and payload["top_risk_factor"]:
+            return payload["top_risk_factor"]
+        pos = self.positive_drivers
+        if pos:
+            return {"feature": pos[0]["feature"], "shap_value": pos[0]["shap_value"]}
+        if self.drivers:
+            return {"feature": self.drivers[0]["feature"], "shap_value": self.drivers[0]["shap_value"]}
+        return None
+
+    @property
+    def feature_values(self):
+        payload = self.shap_payload
+        if isinstance(payload, dict) and "feature_values" in payload:
+            return payload["feature_values"]
         return {}
 
 

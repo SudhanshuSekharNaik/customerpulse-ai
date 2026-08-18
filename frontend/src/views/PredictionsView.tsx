@@ -206,6 +206,13 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
             {topRisk.map((c) => {
               const isCold = Boolean(c.is_cold_start || c.predicted_class === "NEW_CUSTOMER" || c.predicted_class === "COLD_START_UNCERTAIN");
               const hasProb = typeof c.churn_probability === "number" && !isNaN(c.churn_probability) && !isCold;
+              const riskFactor = c.top_risk_factor || c.top_shap_driver;
+              const factorFeature = riskFactor?.feature ? riskFactor.feature.replaceAll("_", " ") : "risk factor";
+              const factorVal = riskFactor?.shap_value !== undefined && riskFactor?.shap_value !== null ? Number(riskFactor.shap_value) : null;
+              const factorValStr = factorVal !== null ? `${factorVal > 0 ? "+" : ""}${factorVal.toFixed(2)}` : "";
+              const stage = c.lifecycle_stage || c.current_state || "ENGAGED";
+              const spend = c.spend !== undefined ? c.spend : c.total_revenue;
+              const orders = c.orders !== undefined ? c.orders : c.total_orders;
               
               return (
                 <tr key={c.customer_id} onClick={() => onSelectCustomer(c.customer_id)} style={{ cursor: "pointer" }}>
@@ -218,7 +225,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
                     )}
                   </td>
                   <td>
-                    <span className={`badge badge-state-${c.current_state}`}>{c.current_state}</span>
+                    <span className={`badge badge-state-${stage}`}>{stage}</span>
                   </td>
                   <td>
                     {hasProb ? (
@@ -231,8 +238,8 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
                       </span>
                     )}
                   </td>
-                  <td style={{ fontWeight: 600 }}>₹{c.total_revenue?.toFixed(2) || "0.00"}</td>
-                  <td>{c.total_orders || 0}</td>
+                  <td style={{ fontWeight: 600 }}>₹{Number(spend || 0).toFixed(2)}</td>
+                  <td>{orders || 0}</td>
                   <td>
                     {isCold ? (
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -240,7 +247,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
                       </span>
                     ) : (
                       <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
-                        {c.top_shap_driver?.feature ? c.top_shap_driver.feature.replaceAll("_", " ") : "risk factor"} ({c.top_shap_driver?.shap_value > 0 ? "+" : ""}{c.top_shap_driver?.shap_value !== undefined ? Number(c.top_shap_driver.shap_value).toFixed(2) : "0.00"})
+                        {factorFeature} {factorValStr && `(${factorValStr})`}
                       </span>
                     )}
                   </td>

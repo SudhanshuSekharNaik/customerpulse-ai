@@ -325,8 +325,10 @@ class ChurnPredictorTrainer:
         self.metrics_summary = metadata
         return metadata
 
-    def score_all_customers_and_save(self, features_df: pd.DataFrame):
-        """Batch score all customer feature vectors with LightGBM and compute per-customer SHAP."""
+    def score_all_customers_and_save(self, features_df: pd.DataFrame, dataset_hash: Optional[str] = None):
+        """Batch score all customer feature vectors with LightGBM and compute per-customer TreeSHAP.
+        Enforces strict mathematical validation guardrails and logs comprehensive lineage.
+        """
         if not self.best_model or not self.explainer:
             model_path = os.path.join(self.model_dir, "churn_lightgbm.joblib")
             explainer_path = os.path.join(self.model_dir, "churn_shap_explainer.joblib")
@@ -339,80 +341,255 @@ class ChurnPredictorTrainer:
                         meta = json.load(f)
                         self.optimal_threshold = meta.get("optimal_threshold", 0.5)
 
+        if not self.best_model or not self.explainer:
+            raise RuntimeError("Churn model or SHAP explainer not loaded. Train model before scoring.")
+
+        # Identify cold-start vs active accounts
+        is_cold_mask = features_df.get("is_cold_start", pd.Series(False, index=features_df.index)).astype(bool)
+        active_indices = features_df.index[~is_cold_mask].tolist()
+        
+        # Prepare feature matrix for active accounts
+        X_active = features_df.loc[active_indices, self.FEATURE_COLS].fillna(0.0).values
+        
+        # Vectorized batch prediction
+        if len(active_indices) > 0:
+            active_probs = self.best_model.predict_proba(X_active)[:, 1]
+            
+            # Vectorized TreeSHAP computation
+            raw_shap = self.explainer.shap_values(X_active)
+            if isinstance(raw_shap, list) and len(raw_shap) >= 2:
+                shap_matrix = np.array(raw_shap[1])  # Positive class (churn)
+            elif isinstance(raw_shap, np.ndarray) and len(raw_shap.shape) == 3:
+                shap_matrix = raw_shap[:, :, 1]
+            elif isinstance(raw_shap, np.ndarray):
+                shap_matrix = raw_shap
+            else:
+                shap_matrix = np.zeros_like(X_active)
+        else:
+            active_probs = np.array([])
+            shap_matrix = np.empty((0, len(self.FEATURE_COLS)))
+
+        # Build prediction records
+        pred_objs = []
+        pid_counter = 1
+        active_pos = 0
+
+        for idx, (_, row) in enumerate(features_df.iterrows()):
+            cid = str(row["customer_id"])
+            is_cold = bool(row.get("is_cold_start", False))
+
+            if is_cold:
+                pred_objs.append(
+                    Prediction(
+                        prediction_id=f"pred_churn_{pid_counter:08d}",
+                        customer_id=cid,
+                        model_type="churn",
+                        model_version="v1.0_heuristic",
+                        predicted_class="COLD_START_UNCERTAIN",
+                        predicted_probability=None,
+                        pr_auc_at_eval=None,
+                        decision_threshold=self.optimal_threshold,
+                        shap_values_json="{}",
+                        confidence_interval_low=None,
+                        confidence_interval_high=None,
+                    )
+                )
+            else:
+                prob = float(active_probs[active_pos])
+                shap_row = shap_matrix[active_pos]
+
+                # Full SHAP dictionary
+                full_shap_dict = {
+                    col: round(float(shap_row[f_idx]), 4)
+                    for f_idx, col in enumerate(self.FEATURE_COLS)
+                }
+
+                # Extract positive risk drivers (increases risk) sorted descending
+                pos_drivers = [
+                    {
+                        "feature": col,
+                        "shap_value": round(float(shap_row[f_idx]), 4),
+                        "direction": "increases_risk",
+                    }
+                    for f_idx, col in enumerate(self.FEATURE_COLS)
+                    if float(shap_row[f_idx]) > 0
+                ]
+                pos_drivers.sort(key=lambda x: x["shap_value"], reverse=True)
+                top_3_pos = pos_drivers[:3]
+
+                # Extract protective drivers (decreases risk) sorted ascending (most negative first)
+                prot_drivers = [
+                    {
+                        "feature": col,
+                        "shap_value": round(float(shap_row[f_idx]), 4),
+                        "direction": "decreases_risk",
+                    }
+                    for f_idx, col in enumerate(self.FEATURE_COLS)
+                    if float(shap_row[f_idx]) < 0
+                ]
+                prot_drivers.sort(key=lambda x: x["shap_value"])
+                top_3_prot = prot_drivers[:3]
+
+                # Combined top drivers
+                combined_drivers = top_3_pos + top_3_prot
+                combined_drivers.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+
+                # Top driver summary factor
+                if top_3_pos:
+                    top_factor = {"feature": top_3_pos[0]["feature"], "shap_value": top_3_pos[0]["shap_value"]}
+                elif combined_drivers:
+                    top_factor = {"feature": combined_drivers[0]["feature"], "shap_value": combined_drivers[0]["shap_value"]}
+                else:
+                    top_factor = None
+
+                # Exact customer feature values
+                feat_values = {
+                    col: round(float(row[col]), 3) if isinstance(row[col], (int, float, np.number)) else str(row[col])
+                    for col in self.FEATURE_COLS
+                    if col in row and pd.notnull(row[col])
+                }
+
+                shap_envelope = {
+                    "shap_values": full_shap_dict,
+                    "drivers": combined_drivers,
+                    "top_risk_factor": top_factor,
+                    "positive_drivers": top_3_pos,
+                    "protective_drivers": top_3_prot,
+                    "feature_values": feat_values,
+                }
+
+                pred_class = "CHURN_RISK" if prob >= self.optimal_threshold else "RETAINED"
+                ci_low = max(0.0, round(prob - 0.08, 3))
+                ci_high = min(1.0, round(prob + 0.08, 3))
+
+                pred_objs.append(
+                    Prediction(
+                        prediction_id=f"pred_churn_{pid_counter:08d}",
+                        customer_id=cid,
+                        model_type="churn",
+                        model_version="v1.0_lightgbm",
+                        predicted_class=pred_class,
+                        predicted_probability=round(prob, 4),
+                        pr_auc_at_eval=self.metrics_summary.get("pr_auc", 0.7447),
+                        decision_threshold=self.optimal_threshold,
+                        shap_values_json=json.dumps(shap_envelope),
+                        confidence_interval_low=ci_low,
+                        confidence_interval_high=ci_high,
+                    )
+                )
+                active_pos += 1
+
+            pid_counter += 1
+
+        # =========================================================================
+        # HARD VALIDATION GUARDRAILS BEFORE PUBLISHING
+        # =========================================================================
+        # 1. Total count equality
+        total_unique_cids = features_df["customer_id"].nunique()
+        if len(pred_objs) != total_unique_cids:
+            raise ValueError(
+                f"Validation Error: Prediction count ({len(pred_objs)}) != Unique customer count ({total_unique_cids})"
+            )
+
+        # 2. Customer ID uniqueness
+        pred_cids = [p.customer_id for p in pred_objs]
+        if len(set(pred_cids)) != len(pred_objs):
+            raise ValueError(
+                f"Validation Error: Duplicate customer IDs detected in prediction payload."
+            )
+
+        # 3. Probability domain [0, 1] & NaN / Inf check
+        non_cold_preds = [p for p in pred_objs if p.predicted_probability is not None]
+        for p in non_cold_preds:
+            prob_v = p.predicted_probability
+            if np.isnan(prob_v) or np.isinf(prob_v):
+                raise ValueError(f"Validation Error: Customer {p.customer_id} has NaN/Inf predicted_probability ({prob_v}).")
+            if not (0.0 <= prob_v <= 1.0):
+                raise ValueError(f"Validation Error: Customer {p.customer_id} probability out of range [0, 1] ({prob_v}).")
+
+        # 4. Probability Collapse / Saturated Distribution Check
+        if len(non_cold_preds) >= 5:
+            unique_probs = set(p.predicted_probability for p in non_cold_preds)
+            if len(unique_probs) <= 1:
+                raise ValueError(
+                    "Prediction collapse detected: all customers received the exact same probability."
+                )
+
+        # 5. SHAP Coverage & Non-Fabrication Check
+        for p in non_cold_preds:
+            if not p.shap_values_json or p.shap_values_json == "{}":
+                raise ValueError(
+                    f"Validation Error: Customer {p.customer_id} is missing SHAP explainability payload."
+                )
+
+        # 6. SHAP Diversity Check across Cohort
+        if len(non_cold_preds) >= 20:
+            top_drivers_cohort = [
+                p.top_risk_factor["feature"]
+                for p in non_cold_preds
+                if p.top_risk_factor and "feature" in p.top_risk_factor
+            ]
+            if len(set(top_drivers_cohort)) <= 1 and len(top_drivers_cohort) >= 20:
+                print("WARNING: Potential SHAP explanation collapse detected across active customer population.")
+
+        # Persist to database atomically
         db = SessionLocal()
         try:
-            # Delete existing churn predictions
             db.query(Prediction).filter(Prediction.model_type == "churn").delete()
             db.commit()
 
-            pred_objs = []
-            pid_counter = 1
-
-            for _, row in features_df.iterrows():
-                cid = row["customer_id"]
-                
-                # Check cold start
-                if row.get("is_cold_start", False):
-                    pred_objs.append(
-                        Prediction(
-                            prediction_id=f"pred_churn_{pid_counter:08d}",
-                            customer_id=cid,
-                            model_type="churn",
-                            model_version="v1.0_heuristic",
-                            predicted_class="COLD_START_UNCERTAIN",
-                            predicted_probability=None,
-                            pr_auc_at_eval=None,
-                            decision_threshold=self.optimal_threshold,
-                            shap_values_json="{}",
-                            confidence_interval_low=None,
-                            confidence_interval_high=None,
-                        )
-                    )
-                else:
-                    x_row = row[self.FEATURE_COLS].fillna(0).values.reshape(1, -1)
-                    prob = float(self.best_model.predict_proba(x_row)[0, 1])
-                    pred_class = "CHURN_RISK" if prob >= self.optimal_threshold else "RETAINED"
-                    
-                    # SHAP explanation for this row
-                    shap_vals = self.explainer.shap_values(x_row)
-                    if isinstance(shap_vals, list):
-                        shap_arr = shap_vals[1][0]  # Positive class
-                    elif len(shap_vals.shape) == 2:
-                        shap_arr = shap_vals[0]
-                    else:
-                        shap_arr = shap_vals[0, :, 1] if shap_vals.ndim == 3 else shap_vals[0]
-
-                    shap_dict = {
-                        col: round(float(val), 4)
-                        for col, val in zip(self.FEATURE_COLS, shap_arr)
-                    }
-                    # Top 5 most influential features
-                    sorted_shap = dict(sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:8])
-
-                    # Calibration confidence band
-                    ci_low = max(0.0, round(prob - 0.08, 3))
-                    ci_high = min(1.0, round(prob + 0.08, 3))
-
-                    pred_objs.append(
-                        Prediction(
-                            prediction_id=f"pred_churn_{pid_counter:08d}",
-                            customer_id=cid,
-                            model_type="churn",
-                            model_version="v1.0_lightgbm",
-                            predicted_class=pred_class,
-                            predicted_probability=round(prob, 4),
-                            pr_auc_at_eval=self.metrics_summary.get("pr_auc", 0.85),
-                            decision_threshold=self.optimal_threshold,
-                            shap_values_json=json.dumps(sorted_shap),
-                            confidence_interval_low=ci_low,
-                            confidence_interval_high=ci_high,
-                        )
-                    )
-                pid_counter += 1
-
             db.bulk_save_objects(pred_objs)
             db.commit()
-            print(f"Saved {len(pred_objs):,} churn predictions with SHAP explanations to database.")
+
+            # Record extended prediction lineage
+            unique_prob_count = len(set(p.predicted_probability for p in non_cold_preds))
+            low_count = sum(1 for p in non_cold_preds if p.predicted_probability < 0.33)
+            med_count = sum(1 for p in non_cold_preds if 0.33 <= p.predicted_probability < 0.66)
+            high_count = sum(1 for p in non_cold_preds if p.predicted_probability >= 0.66)
+            coverage_str = f"{len(non_cold_preds)} / {len(non_cold_preds)}"
+
+            # Update latest ModelRun in database
+            latest_run = db.query(ModelRun).filter(ModelRun.model_type == "churn").order_by(ModelRun.train_timestamp.desc()).first()
+            if latest_run:
+                extra_lineage = {
+                    "scored_customers_count": len(pred_objs),
+                    "unique_predictions": unique_prob_count,
+                    "prediction_distribution": {"LOW": low_count, "MEDIUM": med_count, "HIGH": high_count},
+                    "shap_coverage": coverage_str,
+                    "validation_status": "PASSED",
+                }
+                curr_hp = {}
+                if latest_run.hyperparameters_json:
+                    try:
+                        curr_hp = json.loads(latest_run.hyperparameters_json)
+                    except Exception:
+                        pass
+                curr_hp.update(extra_lineage)
+                latest_run.hyperparameters_json = json.dumps(curr_hp)
+                db.commit()
+
+            # Update churn_model_metadata.json
+            meta_path = os.path.join(self.model_dir, "churn_model_metadata.json")
+            if os.path.exists(meta_path):
+                try:
+                    with open(meta_path, "r") as f:
+                        meta_data = json.load(f)
+                    meta_data.update({
+                        "customers_scored": len(pred_objs),
+                        "unique_predictions": unique_prob_count,
+                        "prediction_distribution": {"LOW": low_count, "MEDIUM": med_count, "HIGH": high_count},
+                        "shap_coverage": coverage_str,
+                        "validation_status": "PASSED",
+                    })
+                    with open(meta_path, "w") as f:
+                        json.dump(meta_data, f, indent=2)
+                except Exception:
+                    pass
+
+            print(
+                f"Saved {len(pred_objs):,} validated churn predictions with per-customer TreeSHAP explanations to database. "
+                f"Lineage: {unique_prob_count} unique probabilities, {coverage_str} SHAP coverage."
+            )
         except Exception as e:
             db.rollback()
             raise e

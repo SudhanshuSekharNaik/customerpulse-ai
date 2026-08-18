@@ -158,19 +158,32 @@ class CustomerService:
                     "status_text": "New customer — not enough history for a prediction yet",
                     "predicted_class": "NEW_CUSTOMER",
                     "predicted_probability": None,
+                    "churn_probability": None,
                     "decision_threshold": churn_pred.decision_threshold or 0.50,
                     "shap_values": {},
+                    "drivers": [],
+                    "positive_drivers": [],
+                    "protective_drivers": [],
+                    "top_risk_factor": None,
+                    "feature_values": {},
                     "ci_low": None,
                     "ci_high": None,
                 }
             else:
+                prob = churn_pred.predicted_probability
                 churn_dict = {
                     "is_cold_start": False,
                     "status_text": "Active ML prediction",
                     "predicted_class": churn_pred.predicted_class,
-                    "predicted_probability": churn_pred.predicted_probability,
+                    "predicted_probability": prob,
+                    "churn_probability": prob,
                     "decision_threshold": churn_pred.decision_threshold or 0.50,
                     "shap_values": churn_pred.shap_values or {},
+                    "drivers": churn_pred.drivers or [],
+                    "positive_drivers": churn_pred.positive_drivers or [],
+                    "protective_drivers": churn_pred.protective_drivers or [],
+                    "top_risk_factor": churn_pred.top_risk_factor,
+                    "feature_values": churn_pred.feature_values or {},
                     "ci_low": churn_pred.confidence_interval_low,
                     "ci_high": churn_pred.confidence_interval_high,
                 }
