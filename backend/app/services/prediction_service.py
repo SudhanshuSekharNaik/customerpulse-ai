@@ -2,7 +2,7 @@
 
 import os
 import json
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
@@ -93,13 +93,17 @@ class PredictionService:
         }
 
     @staticmethod
-    def get_top_churn_customers(db: Session, limit: int = 50) -> List[Dict[str, Any]]:
-        preds = db.query(Prediction, Customer, CustomerFeature, CustomerState)\
+    def get_top_churn_customers(db: Session, limit: int = 50, search: Optional[str] = None) -> List[Dict[str, Any]]:
+        query = db.query(Prediction, Customer, CustomerFeature, CustomerState)\
             .join(Customer, Customer.customer_id == Prediction.customer_id)\
             .outerjoin(CustomerFeature, CustomerFeature.customer_id == Customer.customer_id)\
             .outerjoin(CustomerState, CustomerState.customer_id == Customer.customer_id)\
-            .filter(Prediction.model_type == "churn")\
-            .order_by(desc(Prediction.predicted_probability), desc(Customer.total_revenue))\
+            .filter(Prediction.model_type == "churn")
+        
+        if search:
+            query = query.filter(Customer.customer_id.contains(search) | Customer.email.contains(search))
+            
+        preds = query.order_by(desc(Prediction.predicted_probability), desc(Customer.total_revenue))\
             .limit(limit).all()
 
         results = []

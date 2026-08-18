@@ -199,3 +199,42 @@ def test_mlops_and_segmentation_cluster_k_agreement():
     assert seg_run is not None, "Segmentation model run missing from registry"
     assert seg_run["selected_k"] == 3
     assert seg_run["silhouette_score"] is not None and seg_run["silhouette_score"] > 0.50
+
+
+def test_debug_endpoint_and_50_random_customers_consistency():
+    """Verify debug endpoint and exact prediction consistency for AMZ_CUST_00848 and 50 random customers."""
+    import random
+
+    # 1. Specifically verify AMZ_CUST_00848
+    resp_848 = client.get("/api/debug/customer/AMZ_CUST_00848/consistency")
+    assert resp_848.status_code == 200
+    data_848 = resp_848.json()
+    assert data_848["status"] == "PASS"
+    assert data_848["difference"] <= 1e-9
+    assert data_848["customer_360_churn"] == data_848["prediction_churn"]
+
+    # Also check search on Predictions API returns the exact same probability
+    pred_search = client.get("/api/predictions/churn/top-risk?search=AMZ_CUST_00848")
+    assert pred_search.status_code == 200
+    search_items = pred_search.json()
+    assert len(search_items) >= 1
+    item_848 = next((x for x in search_items if x["customer_id"] == "AMZ_CUST_00848"), None)
+    assert item_848 is not None
+    assert abs(item_848["churn_probability"] - data_848["prediction_churn"]) <= 1e-9
+
+    # 2. Test 50 random customers
+    db = SessionLocal()
+    try:
+        all_cids = [c[0] for c in db.query(Customer.customer_id).all()]
+        random.seed(123)
+        sample_cids = random.sample(all_cids, min(50, len(all_cids)))
+
+        for cid in sample_cids:
+            resp = client.get(f"/api/debug/customer/{cid}/consistency")
+            assert resp.status_code == 200
+            debug_data = resp.json()
+            assert debug_data["status"] == "PASS", f"Consistency check failed for customer {cid}: {debug_data}"
+            assert debug_data["difference"] <= 1e-9
+            assert debug_data["customer_360_churn"] == debug_data["prediction_churn"]
+    finally:
+        db.close()

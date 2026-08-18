@@ -83,7 +83,11 @@ export const api = {
       confusion_matrix: number[][];
     }>(`${API_BASE}/predictions/churn/overview`),
 
-  getTopChurnRisk: (limit: number = 50) => fetchJson<any[]>(`${API_BASE}/predictions/churn/top-risk?limit=${limit}`),
+  getTopChurnRisk: (limit: number = 50, search?: string) => {
+    const query = new URLSearchParams({ limit: limit.toString() });
+    if (search) query.set("search", search);
+    return fetchJson<any[]>(`${API_BASE}/predictions/churn/top-risk?${query.toString()}`);
+  },
 
   getUpliftOverview: () => fetchJson<UpliftOverview>(`${API_BASE}/uplift/overview`),
 

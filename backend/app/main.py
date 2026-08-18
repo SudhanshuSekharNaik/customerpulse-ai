@@ -18,6 +18,7 @@ from backend.app.api import (
     health,
     universal,
     reports,
+    debug,
 )
 
 app = FastAPI(
@@ -51,6 +52,7 @@ app.include_router(agent.router)
 app.include_router(health.router)
 app.include_router(universal.router)
 app.include_router(reports.router)
+app.include_router(debug.router)
 
 # Mount and serve built frontend React SPA if dist/ exists
 from fastapi.staticfiles import StaticFiles

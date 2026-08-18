@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { TrendingDown, Sliders, AlertCircle, CheckCircle2, Eye, ShoppingCart, CreditCard, Shield, Info, ArrowRight } from "lucide-react";
+import { TrendingDown, Sliders, AlertCircle, CheckCircle2, Eye, ShoppingCart, CreditCard, Shield, Info, ArrowRight, Search } from "lucide-react";
 import { api } from "../services/api";
 import {
   ResponsiveContainer,
@@ -22,13 +22,14 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
   const [topRisk, setTopRisk] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [thresholdSlider, setThresholdSlider] = useState<number>(0.50);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  useEffect(() => {
-    Promise.all([api.getChurnOverview().catch(() => null), api.getTopChurnRisk(25).catch(() => [])])
+  const loadData = (search?: string) => {
+    Promise.all([api.getChurnOverview().catch(() => null), api.getTopChurnRisk(50, search).catch(() => [])])
       .then(([ov, tr]) => {
         setOverview(ov);
         setTopRisk(tr || []);
-        if (ov?.optimal_decision_threshold) {
+        if (ov?.optimal_decision_threshold && !thresholdSlider) {
           setThresholdSlider(ov.optimal_decision_threshold);
         }
         setLoading(false);
@@ -37,7 +38,16 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
         console.error("Failed to load predictions data:", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadData(searchQuery.trim() || undefined);
+  };
 
   const prAucValue = overview?.pr_auc !== undefined && overview?.pr_auc !== null
     ? Number(overview.pr_auc).toFixed(4)
@@ -183,12 +193,53 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
 
       {/* Top At-Risk Customers Table with SHAP Drivers */}
       <div className="glass-card" style={{ padding: "20px" }}>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
-          Top Churn Risk Accounts &amp; Why the Model Flagged Them
-        </h3>
-        <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "16px" }}>
-          Customers who may stop buying, along with the main reasons
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+          <div>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
+              Customer Risk &amp; SHAP Explainability Directory
+            </h3>
+            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
+              Ranked accounts with exact canonical churn predictions and TreeSHAP risk factors
+            </p>
+          </div>
+          <form onSubmit={handleSearch} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <Search size={14} style={{ position: "absolute", left: "10px", color: "var(--text-muted)" }} />
+              <input
+                type="text"
+                placeholder="Search customer (e.g. AMZ_CUST_00848)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  padding: "6px 12px 6px 30px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--border-subtle)",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  color: "#FFFFFF",
+                  fontSize: "0.8rem",
+                  width: "280px",
+                  outline: "none",
+                }}
+              />
+            </div>
+            <button type="submit" className="btn-secondary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>
+              Search
+            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ padding: "6px 10px", fontSize: "0.8rem" }}
+                onClick={() => {
+                  setSearchQuery("");
+                  loadData();
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </form>
+        </div>
 
         <table className="data-table">
           <thead>

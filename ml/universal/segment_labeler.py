@@ -97,7 +97,12 @@ class SegmentLabeler:
                         else:
                             p["final_label"] = "VIP Champions (Core Spenders)"
                     elif base_label == "Ultra-High-Value Outliers":
-                        p["final_label"] = f"Ultra-High-Value Spenders (Tier {rank+1})"
+                        if rank == 0:
+                            p["final_label"] = "VIP Elite"
+                        elif rank == 1:
+                            p["final_label"] = "High-Value Loyalists"
+                        else:
+                            p["final_label"] = f"High-Value Tier {rank+1}"
                     elif base_label == "Core Steady Customers":
                         if p["s_freq"] > cohort_freq:
                             p["final_label"] = "Steady Active Buyers"

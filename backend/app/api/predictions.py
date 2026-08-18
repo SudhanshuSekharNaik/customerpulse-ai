@@ -14,5 +14,9 @@ def get_churn_overview(db: Session = Depends(get_db)):
 
 
 @router.get("/churn/top-risk")
-def get_top_churn_risk(limit: int = Query(50, ge=1, le=200), db: Session = Depends(get_db)):
-    return PredictionService.get_top_churn_customers(db, limit=limit)
+def get_top_churn_risk(
+    limit: int = Query(50, ge=1, le=200),
+    search: str = Query(None),
+    db: Session = Depends(get_db)
+):
+    return PredictionService.get_top_churn_customers(db, limit=limit, search=search)
