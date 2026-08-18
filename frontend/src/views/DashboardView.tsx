@@ -239,7 +239,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   E-COMMERCE TRAFFIC RADAR
                 </span>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                  Amazon &middot; Flipkart &middot; Myntra Shopping Behavior Pattern
+                  {activeContext?.mode_label || activeContext?.dataset_name || "E-Commerce"} Behavior Signature
                 </span>
               </div>
               <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#FFFFFF" }}>
@@ -281,7 +281,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Hourly Shopping Traffic Curve (24 Hours)
                 </span>
                 <span style={{ fontSize: "0.72rem", color: "var(--accent-cyan)" }}>
-                  Prime Peak: 7 PM – 11 PM | Lunch Browse: 1 PM – 3 PM
+                  {traffic.next_peak_window.window_description}
                 </span>
               </div>
 
@@ -368,7 +368,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div style={{ marginTop: "16px", borderTop: "1px solid var(--border-subtle)", paddingTop: "14px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
               <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#FFFFFF" }}>
-                Top Surging Product Categories (Amazon / Flipkart / Myntra Cohort)
+                Top Surging Product Categories ({activeContext?.mode_label || activeContext?.dataset_name || "Active Cohort"})
               </span>
               <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
                 {traffic.festive_sale_multiplier.event_name} (Multiplier: {traffic.festive_sale_multiplier.traffic_multiplier}x)

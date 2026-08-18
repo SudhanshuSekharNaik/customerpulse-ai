@@ -2,7 +2,6 @@
 1. Amazon India E-Commerce Benchmark (12,000 events, Electronics & Multi-Category)
 2. Flipkart SuperMart & Electronics Benchmark (10,000 events, Gadgets, Fashion & Home)
 3. Myntra Lifestyle & Beauty Benchmark (8,000 events, Apparel, Footwear & Cosmetics)
-4. Criteo Marketing Campaign Uplift Benchmark (15,000 rows, Causal Treatment & Control)
 """
 
 import os
@@ -22,10 +21,11 @@ def generate_all_ecommerce_benchmarks():
     start_date = end_date - timedelta(days=180)
 
     # -------------------------------------------------------------
-    # 1. Amazon E-Commerce Benchmark (12,000 Events with Views, Carts, Purchases)
+    # 1. Amazon E-Commerce Benchmark (12,000 Events)
+    # Distinct Pattern: Prime dual-peak (1 PM - 3 PM lunch, 7 PM - 10:30 PM evening surge)
     # -------------------------------------------------------------
     print("Generating Amazon E-Commerce Benchmark dataset (12,000 events)...")
-    amazon_customers = [f"AMZ_CUST_{i+1:05d}" for i in range(1500)]
+    amazon_customers = [f"AMZ_CUST_{i+1:05d}" for i in range(1384)]
     amazon_city_map = {cid: random.choice(cities) for cid in amazon_customers}
     amazon_catalog = {
         "Smartphones & Electronics": [
@@ -35,13 +35,6 @@ def generate_all_ecommerce_benchmarks():
             ("AMZ_E104", "Sony WH-1000XM5 ANC Headphones", 29990.0),
             ("AMZ_E105", "Apple iPad Air M2", 59900.0),
             ("AMZ_E106", "Anker 65W Fast Charger", 2499.0),
-        ],
-        "Fashion & Apparel": [
-            ("AMZ_F201", "Levi's Men 511 Slim Fit Jeans", 3499.0),
-            ("AMZ_F202", "Biba Women Anarkali Kurta Set", 4999.0),
-            ("AMZ_F203", "Nike Air Max Running Shoes", 8995.0),
-            ("AMZ_F204", "Puma Casual Cotton Hoodie", 2799.0),
-            ("AMZ_F205", "Ray-Ban Aviator Sunglasses", 7590.0),
         ],
         "Home Appliances": [
             ("AMZ_H301", "Dyson V12 Cordless Vacuum Cleaner", 47900.0),
@@ -60,26 +53,62 @@ def generate_all_ecommerce_benchmarks():
             ("AMZ_K502", "Psychology of Money", 399.0),
             ("AMZ_K503", "Moleskine Hardcover Journal", 1890.0),
         ],
+        "Fashion & Apparel": [
+            ("AMZ_F201", "Levi's Men 511 Slim Fit Jeans", 3499.0),
+            ("AMZ_F202", "Biba Women Anarkali Kurta Set", 4999.0),
+            ("AMZ_F203", "Nike Air Max Running Shoes", 8995.0),
+            ("AMZ_F204", "Puma Casual Cotton Hoodie", 2799.0),
+            ("AMZ_F205", "Ray-Ban Aviator Sunglasses", 7590.0),
+        ],
     }
+
+    amz_cat_names = list(amazon_catalog.keys())
+    amz_cat_weights = [0.38, 0.25, 0.17, 0.12, 0.08]  # Distinct Amazon Category Weighting
+
+    # Amazon Hourly Shopping Distribution (Dual Peak: 1-3 PM & 7-10 PM)
+    amz_hourly_probs = [
+        0.015, 0.010, 0.005, 0.005, 0.008, 0.015,
+        0.030, 0.045, 0.065, 0.075, 0.080, 0.075,
+        0.070, 0.095, 0.085, 0.065, 0.060, 0.065,
+        0.080, 0.110, 0.105, 0.085, 0.055, 0.025
+    ]
+    amz_hourly_probs = np.array(amz_hourly_probs) / sum(amz_hourly_probs)
 
     cust_weights = np.random.pareto(a=1.8, size=len(amazon_customers)) + 0.2
     cust_weights /= cust_weights.sum()
-    assigned = np.random.choice(amazon_customers, size=12000, p=cust_weights)
+    assigned_amz = np.random.choice(amazon_customers, size=12000, p=cust_weights)
 
     amz_rows = []
     for i in range(12000):
-        cid = assigned[i]
+        cid = assigned_amz[i]
         city = amazon_city_map[cid]
         rand_offset = random.uniform(0, 180)
         base_dt = start_date + timedelta(days=rand_offset)
-        order_date = base_dt.replace(hour=random.randint(8, 23), minute=random.randint(0, 59), second=random.randint(0, 59))
         
-        cat = random.choice(list(amazon_catalog.keys()))
+        # Sample hour from distinct Amazon curve
+        hr = int(np.random.choice(range(24), p=amz_hourly_probs))
+        order_date = base_dt.replace(hour=hr, minute=random.randint(0, 59), second=random.randint(0, 59))
+        
+        cat = np.random.choice(amz_cat_names, p=amz_cat_weights)
         prod_id, prod_name, unit_price = random.choice(amazon_catalog[cat])
         
-        # 60% purchase transactions, 25% views, 15% addtocart
+        # Realistic e-commerce funnel: 65% view, 24% addtocart, 11% purchase
         ev_choice = random.random()
-        if ev_choice < 0.60:
+        if ev_choice < 0.65:
+            ev_type = "view"
+            qty = 1
+            disc_pct = 0
+            sales_amt = 0.0
+            is_ret = 0
+            rating = 5
+        elif ev_choice < 0.89:
+            ev_type = "addtocart"
+            qty = 1
+            disc_pct = 0
+            sales_amt = 0.0
+            is_ret = 0
+            rating = 5
+        else:
             ev_type = "purchase"
             qty = 1 if unit_price > 10000 else random.choice([1, 2, 3])
             disc_pct = random.choice([0, 5, 10, 15, 20])
@@ -87,20 +116,6 @@ def generate_all_ecommerce_benchmarks():
             sales_amt = round(raw_amt * (1 - disc_pct / 100.0), 2)
             is_ret = 1 if random.random() < 0.04 else 0
             rating = random.choice([5, 5, 4, 4, 4, 3, 1])
-        elif ev_choice < 0.85:
-            ev_type = "view"
-            qty = 1
-            disc_pct = 0
-            sales_amt = 0.0
-            is_ret = 0
-            rating = 5
-        else:
-            ev_type = "addtocart"
-            qty = 1
-            disc_pct = 0
-            sales_amt = 0.0
-            is_ret = 0
-            rating = 5
         
         amz_rows.append({
             "order_id": f"AMZ_ORD_{i+1:07d}",
@@ -127,9 +142,10 @@ def generate_all_ecommerce_benchmarks():
 
     # -------------------------------------------------------------
     # 2. Flipkart E-Commerce Benchmark (10,000 Events)
+    # Distinct Pattern: Midnight flash sales (12 AM), Midday Deals (12 PM - 1 PM), SuperCoin Peak (8 PM - 9 PM)
     # -------------------------------------------------------------
     print("Generating Flipkart E-Commerce Benchmark dataset (10,000 events)...")
-    fk_users = [f"FK_USER_{i+1:05d}" for i in range(1200)]
+    fk_users = [f"FK_USER_{i+1:05d}" for i in range(1109)]
     fk_city_map = {uid: random.choice(cities) for uid in fk_users}
     fk_catalog = {
         "Mobiles & Tablets": [
@@ -157,6 +173,18 @@ def generate_all_ecommerce_benchmarks():
         ],
     }
 
+    fk_cat_names = list(fk_catalog.keys())
+    fk_cat_weights = [0.44, 0.28, 0.16, 0.12]  # Mobiles & Laptops dominant
+
+    # Flipkart Hourly Distribution (Midnight Flash Deals, 12-1 PM Deals, 8-9 PM SuperCoin Surge)
+    fk_hourly_probs = [
+        0.090, 0.055, 0.025, 0.010, 0.005, 0.005,
+        0.015, 0.035, 0.050, 0.065, 0.075, 0.085,
+        0.105, 0.090, 0.065, 0.055, 0.060, 0.070,
+        0.085, 0.105, 0.120, 0.095, 0.050, 0.030
+    ]
+    fk_hourly_probs = np.array(fk_hourly_probs) / sum(fk_hourly_probs)
+
     fk_weights = np.random.pareto(a=1.7, size=len(fk_users)) + 0.2
     fk_weights /= fk_weights.sum()
     fk_assigned = np.random.choice(fk_users, size=10000, p=fk_weights)
@@ -167,27 +195,31 @@ def generate_all_ecommerce_benchmarks():
         city = fk_city_map[uid]
         rand_offset = random.uniform(0, 180)
         base_dt = start_date + timedelta(days=rand_offset)
-        order_time = base_dt.replace(hour=random.randint(9, 23), minute=random.randint(0, 59), second=random.randint(0, 59))
         
-        vert = random.choice(list(fk_catalog.keys()))
+        # Sample hour from distinct Flipkart curve
+        hr = int(np.random.choice(range(24), p=fk_hourly_probs))
+        order_time = base_dt.replace(hour=hr, minute=random.randint(0, 59), second=random.randint(0, 59))
+        
+        vert = np.random.choice(fk_cat_names, p=fk_cat_weights)
         item_id, title, price = random.choice(fk_catalog[vert])
         
+        # Funnel: 60% view, 27% add_to_cart, 13% order
         ev_choice = random.random()
-        if ev_choice < 0.65:
-            ev_type = "order"
-            disc = random.choice([0, 10, 15, 20, 30])
-            val = round(price * (1 - disc / 100.0), 2)
-            rating = random.choice([5, 5, 4, 4, 3, 2])
-        elif ev_choice < 0.85:
+        if ev_choice < 0.60:
             ev_type = "view"
             disc = 0
             val = 0.0
             rating = 5
-        else:
+        elif ev_choice < 0.87:
             ev_type = "add_to_cart"
             disc = 0
             val = 0.0
             rating = 5
+        else:
+            ev_type = "order"
+            disc = random.choice([0, 10, 15, 20, 30])
+            val = round(price * (1 - disc / 100.0), 2)
+            rating = random.choice([5, 5, 4, 4, 3, 2])
 
         fk_rows.append({
             "order_id": f"FK_TXN_{i+1:07d}",
@@ -211,9 +243,10 @@ def generate_all_ecommerce_benchmarks():
 
     # -------------------------------------------------------------
     # 3. Myntra Lifestyle & Beauty Benchmark (8,000 Events)
+    # Distinct Pattern: Evening & Night Owl Spree (8 PM - 11:30 PM, high post-midnight wardrobe discovery)
     # -------------------------------------------------------------
     print("Generating Myntra Lifestyle & Beauty Benchmark dataset (8,000 events)...")
-    myntra_accounts = [f"MYN_ACC_{i+1:05d}" for i in range(1000)]
+    myntra_accounts = [f"MYN_ACC_{i+1:05d}" for i in range(928)]
     myntra_city_map = {aid: random.choice(cities) for aid in myntra_accounts}
     myntra_catalog = {
         "Women Western & Ethnic": [
@@ -222,23 +255,35 @@ def generate_all_ecommerce_benchmarks():
             ("MYN_W03", "H&M Ribbed Knit Top", 1499.0),
             ("MYN_W04", "W for Woman Silk Blend Trousers", 1899.0),
         ],
-        "Men Casual & Streetwear": [
-            ("MYN_M01", "Tommy Hilfiger Organic Cotton Polo", 3999.0),
-            ("MYN_M02", "Jack & Jones Tapered Cargo Pants", 2999.0),
-            ("MYN_M03", "Calvin Klein Classic Logo Tee", 2499.0),
-            ("MYN_M04", "Snitch Oversized Corduroy Shirt", 1999.0),
+        "Luxury Beauty & Fragrance": [
+            ("MYN_B01", "MAC Studio Fix Fluid Foundation", 3600.0),
+            ("MYN_B02", "Yves Saint Laurent Libre Eau De Parfum", 8400.0),
+            ("MYN_B03", "Clinique Moisture Surge 100H", 2950.0),
         ],
         "Footwear & Sneakers": [
             ("MYN_S01", "Adidas Originals Superstar Sneakers", 8999.0),
             ("MYN_S02", "Birkenstock Arizona Leather Slides", 7990.0),
             ("MYN_S03", "Aldo Men Leather Chelsea Boots", 11999.0),
         ],
-        "Luxury Beauty & Fragrance": [
-            ("MYN_B01", "MAC Studio Fix Fluid Foundation", 3600.0),
-            ("MYN_B02", "Yves Saint Laurent Libre Eau De Parfum", 8400.0),
-            ("MYN_B03", "Clinique Moisture Surge 100H", 2950.0),
+        "Men Casual & Streetwear": [
+            ("MYN_M01", "Tommy Hilfiger Organic Cotton Polo", 3999.0),
+            ("MYN_M02", "Jack & Jones Tapered Cargo Pants", 2999.0),
+            ("MYN_M03", "Calvin Klein Classic Logo Tee", 2499.0),
+            ("MYN_M04", "Snitch Oversized Corduroy Shirt", 1999.0),
         ],
     }
+
+    myn_cat_names = list(myntra_catalog.keys())
+    myn_cat_weights = [0.46, 0.24, 0.18, 0.12]  # Women Fashion & Luxury Beauty dominant
+
+    # Myntra Hourly Distribution (High Night Shopping: 8 PM - Midnight)
+    myn_hourly_probs = [
+        0.045, 0.030, 0.015, 0.008, 0.004, 0.004,
+        0.008, 0.015, 0.030, 0.045, 0.055, 0.065,
+        0.060, 0.065, 0.075, 0.085, 0.080, 0.085,
+        0.100, 0.135, 0.150, 0.125, 0.085, 0.055
+    ]
+    myn_hourly_probs = np.array(myn_hourly_probs) / sum(myn_hourly_probs)
 
     myn_weights = np.random.pareto(a=1.9, size=len(myntra_accounts)) + 0.2
     myn_weights /= myn_weights.sum()
@@ -250,30 +295,34 @@ def generate_all_ecommerce_benchmarks():
         city = myntra_city_map[aid]
         rand_offset = random.uniform(0, 180)
         base_dt = start_date + timedelta(days=rand_offset)
-        txn_date = base_dt.replace(hour=random.randint(10, 23), minute=random.randint(0, 59), second=random.randint(0, 59))
         
-        cat = random.choice(list(myntra_catalog.keys()))
+        # Sample hour from distinct Myntra curve
+        hr = int(np.random.choice(range(24), p=myn_hourly_probs))
+        txn_date = base_dt.replace(hour=hr, minute=random.randint(0, 59), second=random.randint(0, 59))
+        
+        cat = np.random.choice(myn_cat_names, p=myn_cat_weights)
         sku, brand_title, price = random.choice(myntra_catalog[cat])
         
+        # Funnel: 70% view, 22% cart, 8% buy (Cart Abandonment ~64%)
         ev_choice = random.random()
-        if ev_choice < 0.65:
-            ev_type = "buy"
-            coupon_disc = random.choice([0, 200, 400, 500, 1000])
-            val = max(500.0, round(price - coupon_disc, 2))
-            is_ret = 1 if random.random() < 0.08 else 0
-            score = random.choice([95, 90, 85, 80, 70])
-        elif ev_choice < 0.85:
+        if ev_choice < 0.70:
             ev_type = "view"
             coupon_disc = 0
             val = 0.0
             is_ret = 0
             score = 90
-        else:
+        elif ev_choice < 0.92:
             ev_type = "cart"
             coupon_disc = 0
             val = 0.0
             is_ret = 0
             score = 90
+        else:
+            ev_type = "buy"
+            coupon_disc = random.choice([0, 200, 400, 500, 1000])
+            val = max(500.0, round(price - coupon_disc, 2))
+            is_ret = 1 if random.random() < 0.08 else 0
+            score = random.choice([95, 90, 85, 80, 70])
 
         myn_rows.append({
             "transaction_id": f"MYN_TXN_{i+1:07d}",
@@ -294,46 +343,9 @@ def generate_all_ecommerce_benchmarks():
     df_myn = pd.DataFrame(myn_rows).sort_values("purchase_date").reset_index(drop=True)
     df_myn.to_csv("data/myntra_lifestyle_demo.csv", index=False)
     print(f"Saved: data/myntra_lifestyle_demo.csv ({len(df_myn)} rows, {df_myn['account_id'].nunique()} customers)")
-
-    # -------------------------------------------------------------
-    # 4. Campaign Uplift Benchmark (15,000 rows with T/C & Conversion)
-    # -------------------------------------------------------------
-    print("Generating Criteo Marketing Campaign Uplift Benchmark dataset (15,000 rows)...")
-    uplift_users = [f"USR_{i+1:05d}" for i in range(2000)]
-    uplift_rows = []
-    
-    for i in range(15000):
-        uid = random.choice(uplift_users)
-        rand_offset = random.uniform(0, 90)
-        t_stamp = (end_date - timedelta(days=rand_offset)).strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Treatment assignment (85% treatment, 15% control randomized)
-        treatment = 1 if random.random() < 0.85 else 0
-        
-        # Heterogeneous baseline conversion probability
-        base_conv_prob = 0.04 + (hash(uid) % 100) / 2000.0  # 4% to 9%
-        # Causal uplift effect
-        lift = 0.06 if treatment == 1 else 0.0
-        conversion = 1 if random.random() < (base_conv_prob + lift) else 0
-        revenue = round(random.uniform(1200.0, 18500.0), 2) if conversion == 1 else 0.0
-        
-        uplift_rows.append({
-            "user_id": uid,
-            "timestamp": t_stamp,
-            "treatment": treatment,
-            "conversion": conversion,
-            "revenue": revenue,
-            "exposure_count": random.randint(1, 12),
-            "category": random.choice(["Electronics", "Fashion", "Home", "Beauty", "Sports"]),
-            "channel": random.choice(["Paid Search Ad", "Retargeting Display Banner", "In-App Push Message", "Email Newsletter"]),
-            "event_type": "campaign_interaction",
-        })
-
-    df_up = pd.DataFrame(uplift_rows).sort_values("timestamp").reset_index(drop=True)
-    df_up.to_csv("data/criteo_campaign_uplift.csv", index=False)
-    print(f"Saved: data/criteo_campaign_uplift.csv ({len(df_up)} rows, {df_up['user_id'].nunique()} users)")
     print("All e-commerce benchmark CSV files generated successfully.")
 
 
 if __name__ == "__main__":
     generate_all_ecommerce_benchmarks()
+

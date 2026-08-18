@@ -84,23 +84,23 @@ class EcommerceTrafficEngine:
                 "is_weekend": d in [5, 6],
             })
 
-        # 3. Next Peak Traffic Window Prediction
+        # 3. Next Peak Traffic Window Prediction (Derived from actual dataset hourly peaks)
         now = datetime.utcnow()
         current_hour = now.hour
 
-        # Find next upcoming peak hour (13-14 or 19-22)
-        peak_hours = [13, 14, 19, 20, 21, 22]
-        future_peaks = [ph for ph in peak_hours if ph > current_hour]
+        # Find top peak hours from actual dataset hourly distribution
+        top_hours_sorted = [int(h) for h in hourly_counts.sort_values(ascending=False).head(4).index.tolist()]
+        future_peaks = [ph for ph in top_hours_sorted if ph > current_hour]
         if future_peaks:
             next_peak_start = future_peaks[0]
-            next_peak_end = min(23, next_peak_start + 3)
+            next_peak_end = min(23, next_peak_start + 2)
             time_until_peak = next_peak_start - current_hour
             window_text = f"Today, {cls.HOURLY_LABELS[next_peak_start]} – {cls.HOURLY_LABELS[next_peak_end]}"
             urgency = "IN_HOURS"
         else:
-            next_peak_start = 13
-            next_peak_end = 15
-            time_until_peak = (24 - current_hour) + 13
+            next_peak_start = top_hours_sorted[0]
+            next_peak_end = min(23, next_peak_start + 2)
+            time_until_peak = (24 - current_hour) + next_peak_start
             window_text = f"Tomorrow, {cls.HOURLY_LABELS[next_peak_start]} – {cls.HOURLY_LABELS[next_peak_end]}"
             urgency = "NEXT_DAY"
 
@@ -120,9 +120,13 @@ class EcommerceTrafficEngine:
             views = max(raw_views, raw_carts, raw_purchases)
             carts = raw_carts
             purchases = raw_purchases
-            cart_abandon_rate = min(100.0, max(0.0, round(((carts - purchases) / max(1, carts)) * 100.0, 1))) if carts > purchases else 0.0
+            if carts > 0:
+                checkout_conv_rate = min(100.0, max(0.0, round((purchases / carts) * 100.0, 1)))
+                cart_abandon_rate = round(100.0 - checkout_conv_rate, 1)
+            else:
+                checkout_conv_rate = min(100.0, max(0.0, round((purchases / max(1, views)) * 100.0, 1)))
+                cart_abandon_rate = 0.0
             cart_to_view_rate = min(100.0, max(0.0, round((carts / max(1, views)) * 100.0, 2)))
-            checkout_conv_rate = min(100.0, max(0.0, round((purchases / max(1, views)) * 100.0, 2)))
             recovered_rev = round(float(df["revenue"].sum() * (cart_abandon_rate / 100.0) * 0.20), 2) if "revenue" in df.columns else 0.0
             has_funnel_events = True
             funnel_note = None
