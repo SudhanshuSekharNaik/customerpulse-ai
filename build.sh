@@ -20,7 +20,6 @@ python scripts/build_features.py
 echo "=== [4/4] Training Baseline AI / ML Models ==="
 python scripts/train_churn.py
 python scripts/train_segmentation.py
-python scripts/train_uplift.py
 python scripts/train_next_event.py
 python scripts/generate_recommendations.py
 

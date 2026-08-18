@@ -7,7 +7,6 @@ import { SegmentsView } from "./views/SegmentsView";
 import { StatesView } from "./views/StatesView";
 import { PredictionsView } from "./views/PredictionsView";
 import { BehaviorView } from "./views/BehaviorView";
-import { UpliftView } from "./views/UpliftView";
 import { RecommendationsView } from "./views/RecommendationsView";
 import { AgentView } from "./views/AgentView";
 import { ModelsView } from "./views/ModelsView";
@@ -170,15 +169,6 @@ export const App: React.FC = () => {
 
           {currentTab === "behavior" && (
             <BehaviorView onSelectCustomer={handleSelectCustomer} />
-          )}
-
-          {currentTab === "uplift" && (
-            <UpliftView
-              onSelectCustomer={handleSelectCustomer}
-              activeContext={activeContext}
-              onOpenUploadModal={() => setUploadModalOpen(true)}
-              onSwitchMode={handleSwitchMode}
-            />
           )}
 
           {currentTab === "recommendations" && (

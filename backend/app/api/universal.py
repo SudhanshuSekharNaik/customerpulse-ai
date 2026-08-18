@@ -239,16 +239,6 @@ PRESETS = [
         "features": ["transaction_id", "account_id", "purchase_date", "brand_title", "product_category", "cart_value_inr", "coupon_discount"],
         "description": "8,000 orders across Western & Ethnic Wear, Sneakers, and Luxury Beauty with coupon discount dynamics.",
     },
-    {
-        "preset_id": "CRITEO",
-        "name": "Criteo Marketing Campaign Uplift Benchmark",
-        "filename": "criteo_campaign_uplift.csv",
-        "row_count": 15000,
-        "customer_count": 1999,
-        "domain": "Ad Retargeting & Causal ML",
-        "features": ["user_id", "timestamp", "treatment", "conversion", "revenue", "exposure_count", "channel"],
-        "description": "15,000 randomized treatment vs control marketing campaign rows powering X-Learner and Qini curve validation.",
-    },
 ]
 
 

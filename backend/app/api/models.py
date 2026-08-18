@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/models", tags=["Models"])
 
 @router.get("")
 def list_model_runs(db: Session = Depends(get_db)):
-    runs = db.query(ModelRun).order_by(desc(ModelRun.train_timestamp)).all()
+    runs = db.query(ModelRun).filter(ModelRun.model_type != "uplift").order_by(desc(ModelRun.train_timestamp)).all()
     return [
         {
             "run_id": r.run_id,
@@ -26,7 +26,6 @@ def list_model_runs(db: Session = Depends(get_db)):
             "pr_auc": r.pr_auc,
             "roc_auc": r.roc_auc,
             "f1_score": r.f1_score,
-            "qini_score": r.qini_score,
             "silhouette_score": r.silhouette_score,
         }
         for r in runs

@@ -72,16 +72,7 @@ def run_verification():
     print(f"-> Synchronized Accounts in DB: {kpi_myn['total_customers']:,} customers, {kpi_myn['total_events']:,} events")
 
     print("\n" + "=" * 70)
-    print("4. TESTING DATASET SWITCHING -> CRITEO MARKETING UPLIFT")
-    print("=" * 70)
-
-    sw_cri = client.post("/api/universal/switch-mode", json={"mode": "CRITEO"}).json()
-    ctx_cri = client.get("/api/universal/active-context").json()
-    assert "criteo_campaign_uplift.csv" in ctx_cri.get("dataset_name", "")
-    print(f"-> Active Dataset updated to: {ctx_cri.get('dataset_name')}")
-
-    print("\n" + "=" * 70)
-    print("5. SWITCHING BACK TO AMAZON BENCHMARK")
+    print("4. SWITCHING BACK TO AMAZON BENCHMARK")
     print("=" * 70)
     sw_amz = client.post("/api/universal/switch-mode", json={"mode": "AMAZON"}).json()
     ctx_amz = client.get("/api/universal/active-context").json()

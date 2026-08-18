@@ -27,7 +27,7 @@ export const AgentView: React.FC = () => {
     "What is the current state and churn risk for customer cust_1?",
     "Why are high-value customers in the DECLINING state at risk?",
     "Which customer segment has the highest average revenue and cart conversion?",
-    "Who should we target this week with uplift campaigns?",
+    "What are the recommended actions for at-risk customers this week?",
     "SELECT customer_id, total_revenue, total_orders FROM customers ORDER BY total_revenue DESC LIMIT 5;",
     "DROP TABLE customers;", // Test SQL safety
   ];

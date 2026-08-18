@@ -20,7 +20,6 @@ export type NavTab =
   | "states"
   | "predictions"
   | "behavior"
-  | "uplift"
   | "recommendations"
   | "agent"
   | "models";
@@ -41,10 +40,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const customerCountStr = kpis?.total_customers ? kpis.total_customers.toLocaleString() : undefined;
   const recCountStr = kpis?.total_recommendations ? kpis.total_recommendations.toLocaleString() : undefined;
 
-  const isUpliftSupported =
-    activeContext?.report?.capabilities?.capabilities?.uplift_modeling?.available ??
-    (activeContext?.dataset_mode === "CAMPAIGN_UPLIFT");
-
   const navItems = [
     { id: "dashboard", label: "Executive Pulse", icon: LayoutDashboard, badge: "Live" },
     { id: "customers", label: "Customer 360", icon: Users, count: customerCountStr },
@@ -52,7 +47,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "states", label: "State Machine", icon: GitBranch, badge: "Markov" },
     { id: "predictions", label: "Predictions & SHAP", icon: TrendingDown, badge: "TreeSHAP" },
     { id: "behavior", label: "Anomaly Radar", icon: Radar, badge: "Radar" },
-    { id: "uplift", label: "Uplift & Qini", icon: Sparkles, badge: isUpliftSupported ? "Causal" : "Locked 🔒" },
     { id: "recommendations", label: "Next-Best-Action", icon: Target, count: recCountStr },
     { id: "agent", label: "AI Analyst Studio", icon: Bot, badge: "Agentic" },
     { id: "models", label: "MLOps & Quality", icon: Layers, badge: "Audited" },
