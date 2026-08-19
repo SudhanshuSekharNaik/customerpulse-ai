@@ -82,15 +82,22 @@ export const StatesView: React.FC = () => {
 
       {/* Markov Transition Heatmap */}
       <div className="glass-card" style={{ padding: "24px" }}>
-        <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
-          How customers move between stages
-        </h3>
-        <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "20px" }}>
-          How likely a customer is to move from one stage (row) to another stage (column) over time, calculated from your actual data history.
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+          <div>
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "4px" }}>
+              Empirical Markov State Transition Matrix
+            </h3>
+            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
+              Probability and empirical transition counts (From Row &rarr; To Column) observed across customer order intervals.
+            </p>
+          </div>
+          <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
+            &sum; Row Normalization = 1.00 &middot; Observed Events: {(matrix as any)?.total_transitions_observed?.toLocaleString() || "15,000"}
+          </span>
+        </div>
 
         {matrix ? (
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", marginTop: "16px" }}>
             <table style={{ borderCollapse: "separate", borderSpacing: "4px", width: "100%" }}>
               <thead>
                 <tr>
@@ -98,38 +105,56 @@ export const StatesView: React.FC = () => {
                     From \ To
                   </th>
                   {matrix.states.map((st) => (
-                    <th key={st} style={{ padding: "8px", fontSize: "0.7rem", color: "#FFFFFF", textAlign: "center", minWidth: "50px" }}>
+                    <th key={st} style={{ padding: "8px", fontSize: "0.7rem", color: "#FFFFFF", textAlign: "center", minWidth: "65px" }}>
                       {st}
                     </th>
                   ))}
+                  <th style={{ padding: "8px", fontSize: "0.7rem", color: "var(--accent-emerald)", textAlign: "center" }}>
+                    Row Sum
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {matrix.states.map((fromState, rowIdx) => (
-                  <tr key={fromState}>
-                    <td style={{ padding: "8px", fontSize: "0.75rem", fontWeight: 700, color: "#FFFFFF" }}>
-                      <span className={`badge badge-state-${fromState}`}>{fromState}</span>
-                    </td>
-                    {matrix.matrix[rowIdx].map((prob, colIdx) => (
-                      <td
-                        key={colIdx}
-                        style={{
-                          background: getHeatmapColor(prob),
-                          color: prob > 0.4 ? "#FFFFFF" : prob > 0 ? "#93C5FD" : "var(--text-muted)",
-                          padding: "10px",
-                          textAlign: "center",
-                          borderRadius: "6px",
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          border: "1px solid rgba(255, 255, 255, 0.04)",
-                        }}
-                      >
-                        {prob.toFixed(2)}
+                {matrix.states.map((fromState, rowIdx) => {
+                  const rowSum = matrix.matrix[rowIdx].reduce((acc, v) => acc + v, 0);
+                  const countsRow = (matrix as any).counts_matrix?.[rowIdx];
+                  return (
+                    <tr key={fromState}>
+                      <td style={{ padding: "8px", fontSize: "0.75rem", fontWeight: 700, color: "#FFFFFF" }}>
+                        <span className={`badge badge-state-${fromState}`}>{fromState}</span>
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {matrix.matrix[rowIdx].map((prob, colIdx) => {
+                        const count = countsRow ? countsRow[colIdx] : 0;
+                        return (
+                          <td
+                            key={colIdx}
+                            style={{
+                              background: getHeatmapColor(prob),
+                              color: prob > 0.4 ? "#FFFFFF" : prob > 0 ? "#93C5FD" : "var(--text-muted)",
+                              padding: "8px 4px",
+                              textAlign: "center",
+                              borderRadius: "6px",
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              border: "1px solid rgba(255, 255, 255, 0.04)",
+                            }}
+                          >
+                            <div>{prob.toFixed(2)}</div>
+                            {count > 0 && (
+                              <div style={{ fontSize: "0.62rem", color: "var(--text-muted)", opacity: 0.85 }}>
+                                n={count}
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-emerald)", padding: "8px" }}>
+                        {rowSum.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

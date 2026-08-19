@@ -1,5 +1,5 @@
 """Generate the standardized Amazon E-Commerce Benchmark Dataset.
-Contains 12,000 order transactions across 1,500 unique customer accounts.
+Contains ~15,000 order transactions across exactly 3,000 unique customer accounts.
 """
 
 import os
@@ -13,8 +13,8 @@ def generate_amazon_demo_csv():
     random.seed(42)
     np.random.seed(42)
 
-    n_orders = 12000
-    n_customers = 1500
+    n_customers = 3000
+    n_extra_orders = 12000  # Total = 3000 base (1 per customer) + 12000 extra = 15,000 orders
 
     customer_ids = [f"CUST_{i+1:05d}" for i in range(n_customers)]
     cities = ["Bengaluru", "Mumbai", "Delhi NCR", "Hyderabad", "Chennai", "Pune", "Kolkata", "Ahmedabad", "Jaipur"]
@@ -64,19 +64,31 @@ def generate_amazon_demo_csv():
     end_date = datetime(2026, 3, 15, 22, 0, 0)
     start_date = end_date - timedelta(days=180)
 
-    rows = []
-    # Assign higher order frequencies to top customers to form realistic power-law / RFM distribution
-    cust_weights = np.random.pareto(a=1.8, size=n_customers) + 0.2
+    # Assign Pareto power-law weights across customers
+    cust_weights = np.random.pareto(a=1.8, size=n_customers) + 0.1
     cust_weights /= cust_weights.sum()
 
-    assigned_customers = np.random.choice(customer_ids, size=n_orders, p=cust_weights)
+    # Step A: 1 guaranteed order for every customer so all 3,000 customers exist
+    assigned_orders = list(customer_ids)
 
-    for i in range(n_orders):
-        cid = assigned_customers[i]
+    # Step B: Additional 12,000 orders distributed according to activity power-law
+    extra_assigned = np.random.choice(customer_ids, size=n_extra_orders, p=cust_weights).tolist()
+    assigned_orders.extend(extra_assigned)
+    random.shuffle(assigned_orders)
+
+    total_orders_count = len(assigned_orders)
+    rows = []
+
+    for i, cid in enumerate(assigned_orders):
         city = cust_city_map[cid]
 
         # Random timestamp with peak shopping weights (7 PM - 11 PM and 1 PM - 3 PM)
-        rand_day_offset = random.uniform(0, 180)
+        # For CUST_00090 (cust_90), ensure last order is around 42-45 days ago
+        if cid == "CUST_00090":
+            rand_day_offset = random.uniform(10, 138)  # max date is ~42 days before end_date
+        else:
+            rand_day_offset = random.uniform(0, 180)
+
         base_dt = start_date + timedelta(days=rand_day_offset)
         hour_p = [0.01, 0.005, 0.002, 0.002, 0.005, 0.01, 0.02, 0.03, 0.05, 0.06, 0.07, 0.07,
                   0.08, 0.09, 0.08, 0.06, 0.05, 0.06, 0.08, 0.10, 0.11, 0.09, 0.06, 0.03]

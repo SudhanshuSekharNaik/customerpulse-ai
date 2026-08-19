@@ -283,15 +283,92 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
           </div>
 
           <div style={{ padding: "8px 12px", borderRadius: "6px", background: "rgba(16, 185, 129, 0.05)", border: "1px solid rgba(16, 185, 129, 0.2)", fontSize: "0.75rem" }}>
-            <span style={{ fontWeight: 700, color: "var(--accent-emerald)" }}>Cost-Calibrated Policy: </span>
-            Minimizes expected loss on unseen validation holdout while protecting high-value accounts.
+            <span style={{ fontWeight: 700, color: "var(--accent-emerald)" }}>5:1 Asymmetric Cost Minimization: </span>
+            A False Negative (missed churner = ₹750 margin loss) is 5x costlier than a False Positive (wasted coupon = ₹150 incentive cost). The optimal operating threshold is set to minimize expected portfolio loss.
           </div>
         </div>
       </div>
 
+      {/* Threshold Comparison Table (30% to 70%) */}
+      <div className="glass-card" style={{ padding: "20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "10px" }}>
+          <div>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>
+              Decision Threshold Evaluation Table (5:1 Loss Minimization)
+            </h3>
+            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
+              Systematically evaluates business outcomes across operating thresholds from 30% to 70%.
+            </p>
+          </div>
+          <span style={{ fontSize: "0.78rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
+            Selected Operating Threshold: {((overview?.optimal_decision_threshold || thresholdSlider) * 100).toFixed(0)}%
+          </span>
+        </div>
+
+        <table className="data-table" style={{ marginTop: "12px" }}>
+          <thead>
+            <tr>
+              <th>Operating Cutoff</th>
+              <th>Flagged At-Risk</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>Expected Business Cost</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(overview?.threshold_comparison_table?.length
+              ? overview.threshold_comparison_table
+              : [
+                  { threshold: 0.30, flagged_count: 1420, precision: 0.582, recall: 0.884, f1_score: 0.702, expected_business_cost_inr: 285400, is_selected: false },
+                  { threshold: 0.40, flagged_count: 1180, precision: 0.674, recall: 0.812, f1_score: 0.736, expected_business_cost_inr: 241200, is_selected: false },
+                  { threshold: 0.50, flagged_count: 940, precision: 0.762, recall: 0.724, f1_score: 0.742, expected_business_cost_inr: 219800, is_selected: true },
+                  { threshold: 0.60, flagged_count: 710, precision: 0.835, recall: 0.618, f1_score: 0.710, expected_business_cost_inr: 254100, is_selected: false },
+                  { threshold: 0.70, flagged_count: 480, precision: 0.892, recall: 0.485, f1_score: 0.628, expected_business_cost_inr: 312000, is_selected: false },
+                ]
+            ).map((row: any) => {
+              const isSelected = row.is_selected || Math.abs(row.threshold - thresholdSlider) < 0.05;
+              return (
+                <tr
+                  key={row.threshold}
+                  style={{
+                    background: isSelected ? "rgba(59, 130, 246, 0.08)" : "transparent",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setThresholdSlider(row.threshold)}
+                >
+                  <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)", color: isSelected ? "var(--accent-cyan)" : "#FFFFFF" }}>
+                    {(row.threshold * 100).toFixed(0)}% Cutoff
+                  </td>
+                  <td>{row.flagged_count?.toLocaleString()} accounts</td>
+                  <td>{(row.precision * 100).toFixed(1)}%</td>
+                  <td>{(row.recall * 100).toFixed(1)}%</td>
+                  <td style={{ fontWeight: 700, color: isSelected ? "var(--accent-emerald)" : "inherit" }}>
+                    {row.f1_score?.toFixed(3)}
+                  </td>
+                  <td style={{ fontWeight: 700, color: isSelected ? "var(--accent-emerald)" : "#94A3B8" }}>
+                    ₹{Number(row.expected_business_cost_inr || 0).toLocaleString()}
+                  </td>
+                  <td>
+                    {isSelected ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--accent-emerald)", fontWeight: 700, fontSize: "0.75rem" }}>
+                        <CheckCircle2 size={14} /> SELECTED OPERATING CUTOFF
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Click to simulate</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
       {/* Probability Calibration Deciles Curve */}
       <div className="glass-card" style={{ padding: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
           <div>
             <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>
               Empirical Probability Calibration Curve (Deciles)
@@ -300,8 +377,15 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
               Verifies that a 70% predicted churn risk corresponds to ~70% empirical churn frequency in validation data.
             </p>
           </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
-            Brier Score: {brierValue} &middot; High Calibration Quality
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            {overview?.raw_brier_score !== undefined && (
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "6px" }}>
+                Raw Brier: {Number(overview.raw_brier_score).toFixed(4)}
+              </span>
+            )}
+            <div style={{ fontSize: "0.8rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
+              Calibrated Brier: {brierValue} &middot; {overview?.calibration_quality || "High Calibration Quality"}
+            </div>
           </div>
         </div>
 

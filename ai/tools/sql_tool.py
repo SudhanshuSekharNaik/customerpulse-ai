@@ -55,7 +55,9 @@ class ReadOnlySQLTool:
         if not cls.is_safe_query(query):
             return {
                 "success": False,
-                "error": "Unsafe SQL operation rejected.",
+                "security_policy_violation": True,
+                "error": "SECURITY POLICY: Query rejected. Reason: Destructive SQL operation detected. Database mutation: DISABLED. Allowed operations: SELECT / WITH only.",
+                "policy_rule": "Read-Only Analytical Database Isolation (Zero Mutation Allowed)",
                 "rows": [],
                 "columns": [],
                 "row_count": 0,

@@ -59,9 +59,50 @@ export const api = {
 
   getSegments: () => fetchJson<SegmentSummary[]>(`${API_BASE}/segments`),
 
+  getClusterScatter: () =>
+    fetchJson<{
+      selected_k: number;
+      silhouette_score: number;
+      davies_bouldin_index: number;
+      calinski_harabasz_score: number;
+      k_candidates: Array<{ k: number; silhouette: number; davies_bouldin: number; calinski: number; selected: boolean }>;
+      pca_variance_explained: number[];
+      outlier_policy: { criteria: string; p99_spend_threshold: number };
+      centroids: Array<{ cluster_id: number; x: number; y: number; segment_label: string }>;
+      scatter_points: Array<{
+        customer_id: string;
+        cluster_id: number;
+        segment_label: string;
+        x: number;
+        y: number;
+        spend: number;
+        recency_days: number;
+        frequency_30d: number;
+        total_orders?: number;
+        top_category?: string;
+      }>;
+    }>(`${API_BASE}/segments/scatter`),
+
+  getDataHealth: () =>
+    fetchJson<{
+      status: string;
+      data_quality_score: number;
+      total_rows_ingested: number;
+      total_customers: number;
+      feature_records: number;
+      prediction_coverage_pct: number;
+      segment_coverage_pct: number;
+      state_coverage_pct: number;
+      missing_ids_count: number;
+      missing_timestamps_count: number;
+      duplicate_rows_count: number;
+      models: Record<string, string>;
+      last_synced_at: string;
+    }>(`${API_BASE}/analytics/data-health`),
+
   getStates: () => fetchJson<StateSummary[]>(`${API_BASE}/behavior/states`),
 
-  getTransitionMatrix: () => fetchJson<StateTransitionMatrix>(`${API_BASE}/behavior/transitions`),
+  getTransitionMatrix: () => fetchJson<StateTransitionMatrix & { counts_matrix?: number[][]; total_transitions_observed?: number }>(`${API_BASE}/behavior/transitions`),
 
   getBehaviorChanges: (limit: number = 50, severity?: string) => {
     const query = new URLSearchParams({ limit: limit.toString() });

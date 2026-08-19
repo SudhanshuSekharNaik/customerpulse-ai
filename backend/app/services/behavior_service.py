@@ -54,7 +54,7 @@ class BehaviorService:
 
     @staticmethod
     def get_transition_matrix(db: Session) -> Dict[str, Any]:
-        """Compute empirical Markov transition probabilities between states."""
+        """Compute empirical Markov transition probabilities and sample counts between states."""
         records = db.query(CustomerState.previous_state, CustomerState.current_state).all()
         matrix_counts = {s1: {s2: 0 for s2 in STATES} for s1 in STATES}
 
@@ -73,8 +73,12 @@ class BehaviorService:
 
         # Normalize to transition probabilities with strict row-sum invariant
         prob_matrix = []
+        counts_matrix = []
         for s1 in STATES:
             row_total = sum(matrix_counts[s1].values())
+            counts_row = [matrix_counts[s1][s2] for s2 in STATES]
+            counts_matrix.append(counts_row)
+
             if row_total > 0:
                 row_probs = [
                     round(matrix_counts[s1][s2] / float(row_total), 3)
@@ -91,12 +95,14 @@ class BehaviorService:
                 if state_cust_count > 0:
                     row_probs = [1.0 if s2 == s1 else 0.0 for s2 in STATES]
                 else:
-                    row_probs = [0.0 for _ in STATES]
+                    row_probs = [1.0 if s2 == s1 else 0.0 for s2 in STATES]
             prob_matrix.append(row_probs)
 
         return {
             "states": STATES,
             "matrix": prob_matrix,
+            "counts_matrix": counts_matrix,
+            "total_transitions_observed": len(records),
         }
 
     @staticmethod

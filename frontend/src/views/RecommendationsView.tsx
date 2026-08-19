@@ -111,7 +111,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
 
       {/* Action Filter Pills */}
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        {["", "DISCOUNT", "WIN_BACK", "LOYALTY_REWARD", "PRODUCT_RECOMMENDATION", "ENGAGEMENT_PUSH", "VIP_INVITE", "REMINDER"].map((act) => (
+        {["", "WIN_BACK", "VIP_SUPPORT", "LOYALTY_REWARD", "CROSS_SELL", "UPSELL", "PRODUCT_RECOMMENDATION", "RE-ENGAGEMENT", "DISCOUNT"].map((act) => (
           <button
             key={act}
             onClick={() => setActionFilter(act)}
@@ -149,8 +149,13 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
                     {r.action_type}
                   </span>
                 </div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
-                  +₹{r.expected_impact?.toFixed(0)}
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
+                    +₹{Number(r.expected_impact || 0).toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
+                    Expected Net Lift
+                  </div>
                 </div>
               </div>
 
@@ -158,9 +163,24 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
                 {r.what_text}
               </h4>
 
-              <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "12px", lineHeight: 1.45 }}>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "10px", lineHeight: 1.45 }}>
                 {r.why_text}
               </p>
+
+              {/* Expected Value Formula Box */}
+              <div style={{
+                padding: "8px 10px",
+                borderRadius: "6px",
+                background: "rgba(255, 255, 255, 0.02)",
+                border: "1px solid rgba(255, 255, 255, 0.05)",
+                fontSize: "0.72rem",
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-muted)",
+                marginBottom: "12px",
+              }}>
+                <span style={{ color: "var(--accent-cyan)", fontWeight: 700 }}>E[Value] = </span>
+                (P(Conversion|Treatment) - P(Conversion|Holdout)) &times; Margin - Incentive Cost
+              </div>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-subtle)", paddingTop: "10px", fontSize: "0.75rem", color: "var(--text-muted)" }}>

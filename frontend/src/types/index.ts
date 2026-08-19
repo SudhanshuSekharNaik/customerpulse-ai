@@ -244,6 +244,16 @@ export interface AgentResponse {
   tool_calls: AgentToolCall[];
   duration_seconds: number;
   raw_response: string;
+  is_security_rejected?: boolean;
+  intent?: string;
+  tools_used_count?: number;
+  max_tool_budget?: number;
+  agent_trace?: Array<{
+    step_number: number;
+    title: string;
+    status: string;
+    details: string;
+  }>;
 }
 
 // --- Universal Data Mode Types ---

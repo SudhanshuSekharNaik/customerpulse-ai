@@ -20,17 +20,18 @@ from scripts.generate_amazon_demo import generate_amazon_demo_csv
 
 
 def test_amazon_benchmark_zero_fabrication():
-    """Test 1: 12,000-order Amazon e-commerce CSV evaluation."""
+    """Test 1: Amazon e-commerce CSV evaluation."""
     demo_path = "data/amazon_ecommerce_demo.csv"
     if not os.path.exists(demo_path):
         generate_amazon_demo_csv()
 
     df = pd.read_csv(demo_path)
-    assert len(df) == 12000
+    assert len(df) == 15000
     expected_unique_customers = int(df["customer_id"].nunique())
+    assert expected_unique_customers == 3000
     sales_col = "sales_amount_inr" if "sales_amount_inr" in df.columns else "sales_amount"
     expected_total_revenue = float(df[sales_col].sum())
-    expected_aov = round(expected_total_revenue / 12000.0, 2)
+    expected_aov = round(expected_total_revenue / float(len(df)), 2)
 
     # 1. Semantic Column Detection
     detected = SemanticColumnDetector.detect_all_columns(df)
@@ -41,8 +42,8 @@ def test_amazon_benchmark_zero_fabrication():
 
     # 2. Data Quality Profiling
     dq = DataQualityEngine.evaluate_quality(df, semantic_mapping=mapping)
-    assert dq["total_rows"] == 12000
-    assert dq["unique_entities"] == expected_unique_customers
+    assert dq["total_rows"] == 15000
+    assert dq["unique_entities"] == 3000
     assert dq["duplicate_rows"] == 0
     assert dq["overall_score"] >= 90.0
 
@@ -58,7 +59,7 @@ def test_amazon_benchmark_zero_fabrication():
 
     # 4. Pipeline Execution
     report = UniversalPipelineRunner.run_pipeline(df, mapping, "amazon_ecommerce_demo.csv", dataset_id="ds_test_amz")
-    assert report["total_rows"] == 12000
+    assert report["total_rows"] == len(df)
     assert report["unique_entities"] == expected_unique_customers
 
     # Check top customer summaries have valid revenues and honest cold start

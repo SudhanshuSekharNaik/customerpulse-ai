@@ -56,3 +56,7 @@ class RecommendationService:
         ]
         evaluator = OfflinePolicyEvaluator()
         return evaluator.evaluate_policy(rec_dicts)
+
+    @classmethod
+    def get_offline_backtest(cls, db: Session) -> Dict[str, Any]:
+        return cls.get_offline_policy_backtest(db)

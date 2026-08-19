@@ -14,7 +14,7 @@ def test_reject_drop_table():
     assert ReadOnlySQLTool.is_safe_query(query) is False
     res = ReadOnlySQLTool.execute_query(query)
     assert res["success"] is False
-    assert "Unsafe SQL operation rejected" in res["error"]
+    assert "SECURITY POLICY: Query rejected" in res["error"]
 
 
 def test_reject_delete_query():
@@ -22,7 +22,7 @@ def test_reject_delete_query():
     assert ReadOnlySQLTool.is_safe_query(query) is False
     res = ReadOnlySQLTool.execute_query(query)
     assert res["success"] is False
-    assert "Unsafe SQL operation rejected" in res["error"]
+    assert "SECURITY POLICY: Query rejected" in res["error"]
 
 
 def test_reject_update_query():
@@ -30,7 +30,7 @@ def test_reject_update_query():
     assert ReadOnlySQLTool.is_safe_query(query) is False
     res = ReadOnlySQLTool.execute_query(query)
     assert res["success"] is False
-    assert "Unsafe SQL operation rejected" in res["error"]
+    assert "SECURITY POLICY: Query rejected" in res["error"]
 
 
 def test_reject_truncate():

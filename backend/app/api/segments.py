@@ -11,3 +11,9 @@ router = APIRouter(prefix="/api/segments", tags=["Segments"])
 @router.get("")
 def list_segments(db: Session = Depends(get_db)):
     return SegmentService.get_segment_summaries(db)
+
+
+@router.get("/scatter")
+def get_cluster_scatter(db: Session = Depends(get_db)):
+    return SegmentService.get_cluster_scatter_data(db)
+

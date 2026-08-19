@@ -129,21 +129,60 @@ export const AgentView: React.FC = () => {
               </div>
 
               {/* Agent Structured Response Card */}
-              <div className="glass-card" style={{ padding: "20px", borderLeft: "3px solid var(--accent-blue)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "10px", marginBottom: "16px" }}>
+              <div
+                className="glass-card"
+                style={{
+                  padding: "20px",
+                  borderLeft: `3px solid ${item.response.is_security_rejected ? "#EF4444" : "var(--accent-blue)"}`,
+                  background: item.response.is_security_rejected ? "rgba(239, 68, 68, 0.04)" : "inherit",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "10px", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Bot size={18} color="var(--accent-blue)" />
-                    <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#FFFFFF" }}>
-                      CustomerPulse AI Analyst
+                    {item.response.is_security_rejected ? (
+                      <ShieldAlert size={18} color="#EF4444" />
+                    ) : (
+                      <Bot size={18} color="var(--accent-blue)" />
+                    )}
+                    <span style={{ fontWeight: 700, fontSize: "0.85rem", color: item.response.is_security_rejected ? "#FCA5A5" : "#FFFFFF" }}>
+                      {item.response.is_security_rejected ? "Security Policy Guard (Enforced)" : "CustomerPulse AI Analyst"}
                     </span>
                     <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
                       ({item.response.duration_seconds}s)
                     </span>
                   </div>
-                  <span style={{ fontSize: "0.72rem", color: "var(--accent-cyan)", fontFamily: "var(--font-mono)" }}>
-                    {item.response.tool_calls?.length || 0} Tools Executed
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "0.72rem", color: "var(--accent-cyan)", fontFamily: "var(--font-mono)" }}>
+                      {item.response.tool_calls?.length || 0} / 8 Tools Used
+                    </span>
+                    {item.response.is_security_rejected && (
+                      <span style={{ fontSize: "0.72rem", color: "#EF4444", fontWeight: 700, background: "rgba(239, 68, 68, 0.15)", padding: "2px 8px", borderRadius: "4px", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+                        MUTATION DISABLED
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                {/* Dedicated Security Policy Rejection Banner */}
+                {item.response.is_security_rejected && (
+                  <div style={{
+                    padding: "12px 16px",
+                    borderRadius: "8px",
+                    background: "rgba(239, 68, 68, 0.12)",
+                    border: "1px solid rgba(239, 68, 68, 0.4)",
+                    marginBottom: "16px",
+                    fontSize: "0.82rem",
+                    lineHeight: 1.5,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#FCA5A5", fontWeight: 800, marginBottom: "4px" }}>
+                      <ShieldAlert size={16} color="#EF4444" />
+                      <span>SECURITY POLICY: Query Rejected</span>
+                    </div>
+                    <div style={{ color: "#FFFFFF", fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>
+                      Reason: Destructive SQL operation detected. Database mutation: DISABLED. Allowed operations: SELECT / WITH only.
+                    </div>
+                  </div>
+                )}
 
                 {/* 4 Structured Output Blocks */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -152,7 +191,7 @@ export const AgentView: React.FC = () => {
                     <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-blue)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
                       1. Observed Data (Verified Ingestion)
                     </div>
-                    <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.5 }}>
+                    <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.5, whiteSpace: "pre-line" }}>
                       {item.response.observed_data}
                     </div>
                   </div>
@@ -187,6 +226,43 @@ export const AgentView: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Structured 8-Step Execution Trace */}
+                {(item.response as any).agent_trace && (
+                  <div style={{ marginTop: "16px", borderTop: "1px solid var(--border-subtle)", paddingTop: "12px" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Terminal size={14} color="var(--accent-cyan)" />
+                      <span>8-Step Agent Execution Pipeline Trace</span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "6px" }}>
+                      {(item.response as any).agent_trace.map((st: any) => (
+                        <div
+                          key={st.step_number}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            background: "rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.05)",
+                            fontSize: "0.75rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-blue)", fontSize: "0.7rem" }}>
+                            0{st.step_number}
+                          </span>
+                          <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <span style={{ fontWeight: 700, color: "#FFFFFF" }}>{st.title}: </span>
+                            <span style={{ color: "var(--text-secondary)" }}>{st.details}</span>
+                          </div>
+                          <CheckCircle2 size={12} color="var(--accent-emerald)" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Tool Transparency Accordion */}
                 {item.response.tool_calls && item.response.tool_calls.length > 0 && (
