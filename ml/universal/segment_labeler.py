@@ -44,10 +44,10 @@ class SegmentLabeler:
             freq_diff_str = f"+{freq_diff_pct:.0f}%" if freq_diff_pct >= 0 else f"{freq_diff_pct:.0f}%"
 
             # Baseline archetype assignment
-            if s_mon >= cohort_mon * 2.8 or count <= 10:
+            if (s_mon >= cohort_mon * 3.0 or count <= 5) and count <= 10:
                 base_label = "VIP Elite — Strategic Outlier"
-            elif s_mon >= cohort_mon * 1.35 and s_rec <= cohort_rec * 1.05:
-                base_label = "VIP Champions"
+            elif s_mon >= cohort_mon * 1.35:
+                base_label = "High-Value Champions"
             elif s_mon >= cohort_mon * 1.15 and s_rec > cohort_rec:
                 base_label = "At-Risk High Spenders"
             elif s_freq >= cohort_freq * 1.25:
@@ -87,15 +87,20 @@ class SegmentLabeler:
                 p["final_label"] = p["base_label"]
                 final_profiles.append(p)
             else:
-                # Multiple clusters shared the same label — disambiguate by spend or distinctive metric
+                # Multiple clusters shared the same label — disambiguate cleanly
                 sorted_by_spend = sorted(indices, key=lambda i: initial_profiles[i]["s_mon"], reverse=True)
                 for rank, idx in enumerate(sorted_by_spend):
                     p = initial_profiles[idx]
-                    if base_label == "VIP Champions":
+                    if base_label == "VIP Elite — Strategic Outlier":
                         if rank == 0:
-                            p["final_label"] = "VIP Champions (Elite Tier)"
+                            p["final_label"] = "VIP Elite — Strategic Outlier"
                         else:
-                            p["final_label"] = "VIP Champions (Core Spenders)"
+                            p["final_label"] = "High-Value Growth Tier"
+                    elif base_label == "High-Value Champions":
+                        if rank == 0:
+                            p["final_label"] = "High-Value Champions (Tier 1)"
+                        else:
+                            p["final_label"] = "High-Value Champions (Tier 2)"
                     elif base_label == "Ultra-High-Value Outliers":
                         if rank == 0:
                             p["final_label"] = "VIP Elite"

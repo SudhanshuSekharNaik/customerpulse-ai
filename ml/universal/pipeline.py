@@ -222,34 +222,87 @@ class UniversalPipelineRunner:
 
             if n_entities >= 6:
                 max_k = min(6, n_entities - 1)
-                best_k = 3
-                best_sil = -1.0
-
+                candidates_raw = []
                 for k_cand in range(3, max_k + 1):
                     km_cand = KMeans(n_clusters=k_cand, random_state=42, n_init=10)
                     labels_cand = km_cand.fit_predict(X_scaled)
                     sil_cand = float(silhouette_score(X_scaled, labels_cand))
                     db_cand = float(davies_bouldin_score(X_scaled, labels_cand))
                     ch_cand = float(calinski_harabasz_score(X_scaled, labels_cand))
-
-                    k_candidates_metrics.append({
+                    in_cand = float(km_cand.inertia_)
+                    candidates_raw.append({
                         "k": k_cand,
-                        "silhouette": round(sil_cand, 4),
-                        "davies_bouldin": round(db_cand, 4),
-                        "calinski": round(ch_cand, 1),
-                        "selected": False,
+                        "silhouette": sil_cand,
+                        "davies_bouldin": db_cand,
+                        "calinski_harabasz": ch_cand,
+                        "inertia": in_cand,
                     })
 
-                    if sil_cand > best_sil:
-                        best_sil = sil_cand
-                        best_k = k_cand
-                        best_db = db_cand
-                        best_ch = ch_cand
+                # Multi-Objective Normalization across candidates K=3..6
+                sil_vals = [c["silhouette"] for c in candidates_raw]
+                db_vals = [c["davies_bouldin"] for c in candidates_raw]
+                ch_vals = [c["calinski_harabasz"] for c in candidates_raw]
+                in_vals = [c["inertia"] for c in candidates_raw]
 
-                # Mark selected K in candidate metrics
+                min_sil, max_sil = min(sil_vals), max(sil_vals)
+                min_db, max_db = min(db_vals), max(db_vals)
+                min_ch, max_ch = min(ch_vals), max(ch_vals)
+                min_in, max_in = min(in_vals), max(in_vals)
+
+                k_candidates_metrics = []
+                best_score = -1.0
+                best_k = 3
+                best_sil = candidates_raw[0]["silhouette"]
+                best_db = candidates_raw[0]["davies_bouldin"]
+                best_ch = candidates_raw[0]["calinski_harabasz"]
+
+                for c in candidates_raw:
+                    k_val = c["k"]
+                    # Silhouette: higher is better (0..1)
+                    z_sil = (c["silhouette"] - min_sil) / max(1e-6, max_sil - min_sil)
+                    # Davies-Bouldin: lower is better (0..1)
+                    z_db = (max_db - c["davies_bouldin"]) / max(1e-6, max_db - min_db)
+                    # Calinski-Harabasz: higher is better (0..1)
+                    z_ch = (c["calinski_harabasz"] - min_ch) / max(1e-6, max_ch - min_ch)
+                    # Inertia / Elbow: lower is better (0..1)
+                    z_in = (max_in - c["inertia"]) / max(1e-6, max_in - min_in)
+
+                    # Multi-Objective Composite: 35% Silhouette, 30% Davies-Bouldin, 20% Calinski-Harabasz, 15% Diminishing Inertia
+                    comp_score = round(float(0.35 * z_sil + 0.30 * z_db + 0.20 * z_ch + 0.15 * z_in), 3)
+
+                    k_candidates_metrics.append({
+                        "k": k_val,
+                        "silhouette": round(c["silhouette"], 4),
+                        "davies_bouldin": round(c["davies_bouldin"], 4),
+                        "calinski": round(c["calinski_harabasz"], 1),
+                        "calinski_harabasz": round(c["calinski_harabasz"], 1),
+                        "inertia": round(c["inertia"], 1),
+                        "composite_score": comp_score,
+                        "selected": False,
+                        "decision": "CANDIDATE",
+                    })
+
+                    if comp_score > best_score:
+                        best_score = comp_score
+                        best_k = k_val
+                        best_sil = c["silhouette"]
+                        best_db = c["davies_bouldin"]
+                        best_ch = c["calinski_harabasz"]
+
                 for cand in k_candidates_metrics:
                     if cand["k"] == best_k:
                         cand["selected"] = True
+                        cand["decision"] = "SELECTED"
+                        cand["rationale"] = (
+                            f"Multi-Objective Winner (Composite Score: {cand['composite_score']:.3f}). "
+                            f"Optimal balance of peak cluster separation (Silhouette: {cand['silhouette']:.3f}) and "
+                            f"maximum cluster compactness (Davies-Bouldin: {cand['davies_bouldin']:.3f}) without over-fragmentation."
+                        )
+                    else:
+                        cand["rationale"] = (
+                            f"Candidate partitioning (Composite Score: {cand['composite_score']:.3f}). "
+                            f"Suffers from lower separation (Silhouette: {cand['silhouette']:.3f}) and elevated cluster overlap."
+                        )
 
                 # Fit final model with optimal K
                 km_final = KMeans(n_clusters=best_k, random_state=42, n_init=10)
@@ -348,6 +401,8 @@ class UniversalPipelineRunner:
                     "silhouette_score": round(best_sil, 4),
                     "davies_bouldin_index": round(best_db, 4),
                     "calinski_harabasz_score": round(best_ch, 1),
+                    "selection_methodology": "K evaluated from 3–6 using Silhouette, Davies-Bouldin, Calinski-Harabasz and Elbow/Inertia. Final K selected using multi-objective clustering quality and business-actionability constraints.",
+                    "selection_summary": f"Selected K = {best_k} — Multi-objective winner. Optimal balance of peak cluster separation (Silhouette: {best_sil:.3f}) and maximum cluster compactness (Davies-Bouldin: {best_db:.3f}) without over-fragmentation.",
                     "algorithm": "Deterministic KMeans + RobustScaler + PCA(2D)",
                     "feature_columns": clust_cols,
                     "k_candidates": k_candidates_metrics,

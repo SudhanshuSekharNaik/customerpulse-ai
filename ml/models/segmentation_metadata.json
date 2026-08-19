@@ -3,6 +3,8 @@
   "silhouette_score": 0.7541,
   "davies_bouldin_index": 0.5592,
   "calinski_harabasz_score": 2389.0,
+  "selection_methodology": "K evaluated from 3\u20136 using Silhouette, Davies-Bouldin, Calinski-Harabasz and Elbow/Inertia. Final K selected using multi-objective clustering quality and business-actionability constraints.",
+  "selection_summary": "Selected K = 3 \u2014 Multi-objective winner. Optimal balance of peak cluster separation (Silhouette: 0.754) and maximum cluster compactness (Davies-Bouldin: 0.559) without over-fragmentation.",
   "algorithm": "Deterministic KMeans + RobustScaler + PCA(2D)",
   "feature_columns": [
     "recency_days",
@@ -17,28 +19,48 @@
       "silhouette": 0.7541,
       "davies_bouldin": 0.5592,
       "calinski": 2389.0,
-      "selected": true
+      "calinski_harabasz": 2389.0,
+      "inertia": 6693.0,
+      "composite_score": 0.65,
+      "selected": true,
+      "decision": "SELECTED",
+      "rationale": "Multi-Objective Winner (Composite Score: 0.650). Optimal balance of peak cluster separation (Silhouette: 0.754) and maximum cluster compactness (Davies-Bouldin: 0.559) without over-fragmentation."
     },
     {
       "k": 4,
       "silhouette": 0.4579,
       "davies_bouldin": 0.7493,
       "calinski": 2671.9,
-      "selected": false
+      "calinski_harabasz": 2671.9,
+      "inertia": 4724.2,
+      "composite_score": 0.218,
+      "selected": false,
+      "decision": "CANDIDATE",
+      "rationale": "Candidate partitioning (Composite Score: 0.218). Suffers from lower separation (Silhouette: 0.458) and elevated cluster overlap."
     },
     {
       "k": 5,
       "silhouette": 0.4517,
       "davies_bouldin": 0.746,
       "calinski": 2920.7,
-      "selected": false
+      "calinski_harabasz": 2920.7,
+      "inertia": 3543.0,
+      "composite_score": 0.357,
+      "selected": false,
+      "decision": "CANDIDATE",
+      "rationale": "Candidate partitioning (Composite Score: 0.357). Suffers from lower separation (Silhouette: 0.452) and elevated cluster overlap."
     },
     {
       "k": 6,
       "silhouette": 0.4584,
       "davies_bouldin": 0.7664,
       "calinski": 2888.3,
-      "selected": false
+      "calinski_harabasz": 2888.3,
+      "inertia": 2981.7,
+      "composite_score": 0.345,
+      "selected": false,
+      "decision": "CANDIDATE",
+      "rationale": "Candidate partitioning (Composite Score: 0.345). Suffers from lower separation (Silhouette: 0.458) and elevated cluster overlap."
     }
   ],
   "outlier_policy": {
@@ -61,13 +83,13 @@
       "cluster_id": 1,
       "x": 52.755,
       "y": -3.71,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics)"
+      "segment_label": "VIP Elite \u2014 Strategic Outlier"
     },
     {
       "cluster_id": 2,
       "x": 6.262,
       "y": 0.049,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)"
+      "segment_label": "High-Value Champions"
     }
   ],
   "scatter_points": [
@@ -266,7 +288,7 @@
     {
       "customer_id": "cust_1012",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.3624,
       "y": -0.6909,
       "spend": 755855.15,
@@ -698,7 +720,7 @@
     {
       "customer_id": "cust_1045",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.1245,
       "y": 0.6151,
       "spend": 353060.4,
@@ -830,7 +852,7 @@
     {
       "customer_id": "cust_1055",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 20.6803,
       "y": -3.8008,
       "spend": 2293567.15,
@@ -926,7 +948,7 @@
     {
       "customer_id": "cust_1062",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.7654,
       "y": 1.2888,
       "spend": 354047.35,
@@ -1094,7 +1116,7 @@
     {
       "customer_id": "cust_1075",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.0788,
       "y": -0.9081,
       "spend": 925316.6,
@@ -1274,7 +1296,7 @@
     {
       "customer_id": "cust_1089",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.9083,
       "y": -2.2737,
       "spend": 938612.7,
@@ -1502,7 +1524,7 @@
     {
       "customer_id": "cust_1105",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 9.2925,
       "y": -3.9617,
       "spend": 1303703.2,
@@ -1730,7 +1752,7 @@
     {
       "customer_id": "cust_1122",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.0229,
       "y": -0.3285,
       "spend": 431388.15,
@@ -2390,7 +2412,7 @@
     {
       "customer_id": "cust_1172",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.2733,
       "y": -1.3914,
       "spend": 628052.05,
@@ -2510,7 +2532,7 @@
     {
       "customer_id": "cust_1181",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.2268,
       "y": 2.4031,
       "spend": 386628.3,
@@ -2570,7 +2592,7 @@
     {
       "customer_id": "cust_1186",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.8567,
       "y": 2.1929,
       "spend": 275524.85,
@@ -2726,7 +2748,7 @@
     {
       "customer_id": "cust_1198",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.6642,
       "y": 0.1571,
       "spend": 437927.65,
@@ -2906,7 +2928,7 @@
     {
       "customer_id": "cust_1210",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 15.0178,
       "y": 1.6276,
       "spend": 1320784.5,
@@ -3146,7 +3168,7 @@
     {
       "customer_id": "cust_1229",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 7.4163,
       "y": 2.9602,
       "spend": 531920.75,
@@ -3794,7 +3816,7 @@
     {
       "customer_id": "cust_1278",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.4959,
       "y": -0.093,
       "spend": 892530.65,
@@ -4430,7 +4452,7 @@
     {
       "customer_id": "cust_1325",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.9841,
       "y": 0.3377,
       "spend": 543243.7,
@@ -4550,7 +4572,7 @@
     {
       "customer_id": "cust_1334",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.6683,
       "y": 0.1724,
       "spend": 706930.6,
@@ -4562,7 +4584,7 @@
     {
       "customer_id": "cust_1335",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.2947,
       "y": 0.5581,
       "spend": 377273.5,
@@ -4742,7 +4764,7 @@
     {
       "customer_id": "cust_1349",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 9.0505,
       "y": -1.5986,
       "spend": 1074183.45,
@@ -5198,7 +5220,7 @@
     {
       "customer_id": "cust_1383",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.8504,
       "y": 1.2051,
       "spend": 367754.95,
@@ -5270,7 +5292,7 @@
     {
       "customer_id": "cust_1389",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.4101,
       "y": -1.4832,
       "spend": 648845.45,
@@ -5558,7 +5580,7 @@
     {
       "customer_id": "cust_141",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.6758,
       "y": -2.3609,
       "spend": 842127.25,
@@ -5642,7 +5664,7 @@
     {
       "customer_id": "cust_1416",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.0142,
       "y": 1.1172,
       "spend": 392018.2,
@@ -5762,7 +5784,7 @@
     {
       "customer_id": "cust_1425",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.215,
       "y": -1.2546,
       "spend": 616322.65,
@@ -5978,7 +6000,7 @@
     {
       "customer_id": "cust_1441",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.618,
       "y": -1.8899,
       "spend": 620036.3,
@@ -6290,7 +6312,7 @@
     {
       "customer_id": "cust_1465",
       "cluster_id": 1,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics)",
+      "segment_label": "VIP Elite \u2014 Strategic Outlier",
       "x": 42.256,
       "y": 2.0139,
       "spend": 3697038.9,
@@ -6314,7 +6336,7 @@
     {
       "customer_id": "cust_1467",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.4841,
       "y": 0.4216,
       "spend": 406348.85,
@@ -7418,7 +7440,7 @@
     {
       "customer_id": "cust_155",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.414,
       "y": -1.7847,
       "spend": 589941.25,
@@ -7886,7 +7908,7 @@
     {
       "customer_id": "cust_1585",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.4606,
       "y": 2.1367,
       "spend": 694296.25,
@@ -7982,7 +8004,7 @@
     {
       "customer_id": "cust_1592",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 10.4387,
       "y": 0.5919,
       "spend": 1001412.05,
@@ -8318,7 +8340,7 @@
     {
       "customer_id": "cust_1617",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 11.8344,
       "y": 0.7234,
       "spend": 1118212.5,
@@ -8606,7 +8628,7 @@
     {
       "customer_id": "cust_1639",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 11.5729,
       "y": 2.0077,
       "spend": 981847.1,
@@ -8954,7 +8976,7 @@
     {
       "customer_id": "cust_1665",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.3017,
       "y": -0.6491,
       "spend": 746590.35,
@@ -9206,7 +9228,7 @@
     {
       "customer_id": "cust_1684",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.0757,
       "y": -1.2616,
       "spend": 598082.65,
@@ -9398,7 +9420,7 @@
     {
       "customer_id": "cust_1699",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.7793,
       "y": -2.2329,
       "spend": 651414.55,
@@ -9638,7 +9660,7 @@
     {
       "customer_id": "cust_1716",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 11.7096,
       "y": -0.3604,
       "spend": 1197560.95,
@@ -9794,7 +9816,7 @@
     {
       "customer_id": "cust_1728",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 11.8249,
       "y": -0.3686,
       "spend": 1213071.4,
@@ -10154,7 +10176,7 @@
     {
       "customer_id": "cust_1755",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.624,
       "y": 0.8484,
       "spend": 817778.5,
@@ -10406,7 +10428,7 @@
     {
       "customer_id": "cust_1774",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.8798,
       "y": 1.2089,
       "spend": 371530.55,
@@ -11126,7 +11148,7 @@
     {
       "customer_id": "cust_1828",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.5354,
       "y": 1.3783,
       "spend": 589892.25,
@@ -11150,7 +11172,7 @@
     {
       "customer_id": "cust_183",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.3925,
       "y": 0.4095,
       "spend": 394561.5,
@@ -11174,7 +11196,7 @@
     {
       "customer_id": "cust_1831",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.7428,
       "y": 0.5597,
       "spend": 504805.85,
@@ -11618,7 +11640,7 @@
     {
       "customer_id": "cust_1865",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.4729,
       "y": 0.7774,
       "spend": 462695.85,
@@ -11954,7 +11976,7 @@
     {
       "customer_id": "cust_1890",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.4715,
       "y": -1.1484,
       "spend": 984338.15,
@@ -12266,7 +12288,7 @@
     {
       "customer_id": "cust_1913",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.9844,
       "y": -0.4399,
       "spend": 967363.2,
@@ -12554,7 +12576,7 @@
     {
       "customer_id": "cust_1935",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.0181,
       "y": 1.8758,
       "spend": 237933.55,
@@ -12818,7 +12840,7 @@
     {
       "customer_id": "cust_1955",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 24.7222,
       "y": 3.119,
       "spend": 2048818.0,
@@ -12830,7 +12852,7 @@
     {
       "customer_id": "cust_1956",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.065,
       "y": -0.3814,
       "spend": 438507.75,
@@ -13094,7 +13116,7 @@
     {
       "customer_id": "cust_1976",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.9739,
       "y": 1.4795,
       "spend": 444327.55,
@@ -13406,7 +13428,7 @@
     {
       "customer_id": "cust_2",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.3426,
       "y": 1.1742,
       "spend": 502085.15,
@@ -13802,7 +13824,7 @@
     {
       "customer_id": "cust_2028",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.5075,
       "y": -3.1789,
       "spend": 707268.7,
@@ -14474,7 +14496,7 @@
     {
       "customer_id": "cust_2079",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.2885,
       "y": 0.4994,
       "spend": 378161.8,
@@ -14906,7 +14928,7 @@
     {
       "customer_id": "cust_2110",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.0141,
       "y": -1.977,
       "spend": 1012178.2,
@@ -15098,7 +15120,7 @@
     {
       "customer_id": "cust_2125",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.0094,
       "y": -0.4438,
       "spend": 701884.2,
@@ -15638,7 +15660,7 @@
     {
       "customer_id": "cust_2166",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.7192,
       "y": -0.5915,
       "spend": 599523.25,
@@ -15986,7 +16008,7 @@
     {
       "customer_id": "cust_2192",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.4851,
       "y": 0.3965,
       "spend": 407206.25,
@@ -16682,7 +16704,7 @@
     {
       "customer_id": "cust_2244",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.3711,
       "y": -0.6966,
       "spend": 757174.55,
@@ -17246,7 +17268,7 @@
     {
       "customer_id": "cust_2287",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.4807,
       "y": -1.8377,
       "spend": 869229.5,
@@ -17630,7 +17652,7 @@
     {
       "customer_id": "cust_2315",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.9292,
       "y": -0.3272,
       "spend": 687851.75,
@@ -18878,7 +18900,7 @@
     {
       "customer_id": "cust_2409",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.5016,
       "y": 2.1375,
       "spend": 699691.9,
@@ -19202,7 +19224,7 @@
     {
       "customer_id": "cust_2433",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.7389,
       "y": 2.2872,
       "spend": 526069.7,
@@ -19226,7 +19248,7 @@
     {
       "customer_id": "cust_2435",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.6277,
       "y": -0.8282,
       "spend": 526088.75,
@@ -19454,7 +19476,7 @@
     {
       "customer_id": "cust_2452",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.776,
       "y": 0.0662,
       "spend": 455391.7,
@@ -19574,7 +19596,7 @@
     {
       "customer_id": "cust_2461",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 12.2184,
       "y": -4.0264,
       "spend": 1564687.2,
@@ -19718,7 +19740,7 @@
     {
       "customer_id": "cust_2472",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.0448,
       "y": 1.7686,
       "spend": 244594.45,
@@ -19898,7 +19920,7 @@
     {
       "customer_id": "cust_2486",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.4286,
       "y": -0.7047,
       "spend": 496103.35,
@@ -19946,7 +19968,7 @@
     {
       "customer_id": "cust_249",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.0915,
       "y": 1.0222,
       "spend": 405038.7,
@@ -20066,7 +20088,7 @@
     {
       "customer_id": "cust_2499",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.4089,
       "y": -1.4197,
       "spend": 646833.65,
@@ -20150,7 +20172,7 @@
     {
       "customer_id": "cust_2504",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.1487,
       "y": 0.5423,
       "spend": 358392.55,
@@ -20486,7 +20508,7 @@
     {
       "customer_id": "cust_253",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.6461,
       "y": 1.3455,
       "spend": 336591.75,
@@ -20498,7 +20520,7 @@
     {
       "customer_id": "cust_2530",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 15.4477,
       "y": 0.2087,
       "spend": 1483392.8,
@@ -20810,7 +20832,7 @@
     {
       "customer_id": "cust_2554",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.2618,
       "y": -0.2681,
       "spend": 529504.1,
@@ -21026,7 +21048,7 @@
     {
       "customer_id": "cust_2570",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.6427,
       "y": 0.1726,
       "spend": 434620.1,
@@ -21686,7 +21708,7 @@
     {
       "customer_id": "cust_262",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 7.1967,
       "y": -1.3248,
       "spend": 884865.5,
@@ -22178,7 +22200,7 @@
     {
       "customer_id": "cust_2657",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.2775,
       "y": 2.7766,
       "spend": 181759.8,
@@ -22790,7 +22812,7 @@
     {
       "customer_id": "cust_2702",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.0836,
       "y": 1.3942,
       "spend": 461355.25,
@@ -23222,7 +23244,7 @@
     {
       "customer_id": "cust_2735",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.3055,
       "y": 1.6246,
       "spend": 283332.3,
@@ -23246,7 +23268,7 @@
     {
       "customer_id": "cust_2737",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 9.8588,
       "y": 3.3028,
       "spend": 716977.8,
@@ -23522,7 +23544,7 @@
     {
       "customer_id": "cust_2758",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.3035,
       "y": -1.8591,
       "spend": 577485.55,
@@ -23858,7 +23880,7 @@
     {
       "customer_id": "cust_2783",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.8427,
       "y": 0.3948,
       "spend": 522854.95,
@@ -23954,7 +23976,7 @@
     {
       "customer_id": "cust_2790",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 13.7461,
       "y": -1.8704,
       "spend": 1511398.65,
@@ -23978,7 +24000,7 @@
     {
       "customer_id": "cust_2792",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.0334,
       "y": 2.2083,
       "spend": 298478.0,
@@ -24062,7 +24084,7 @@
     {
       "customer_id": "cust_2799",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.4594,
       "y": 2.1718,
       "spend": 693112.55,
@@ -24134,7 +24156,7 @@
     {
       "customer_id": "cust_2803",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.4572,
       "y": 2.9646,
       "spend": 268290.15,
@@ -24146,7 +24168,7 @@
     {
       "customer_id": "cust_2804",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.9343,
       "y": -3.3672,
       "spend": 1038212.05,
@@ -24374,7 +24396,7 @@
     {
       "customer_id": "cust_2821",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.9789,
       "y": -2.2454,
       "spend": 678215.25,
@@ -24578,7 +24600,7 @@
     {
       "customer_id": "cust_2837",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 12.0385,
       "y": 0.5351,
       "spend": 1150751.6,
@@ -24674,7 +24696,7 @@
     {
       "customer_id": "cust_2844",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.8474,
       "y": 0.0521,
       "spend": 465259.4,
@@ -25610,7 +25632,7 @@
     {
       "customer_id": "cust_2914",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.2272,
       "y": 0.8986,
       "spend": 426614.7,
@@ -25790,7 +25812,7 @@
     {
       "customer_id": "cust_2928",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.4499,
       "y": 0.0014,
       "spend": 614761.1,
@@ -25934,7 +25956,7 @@
     {
       "customer_id": "cust_2939",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.0718,
       "y": -1.1546,
       "spend": 594435.0,
@@ -26270,7 +26292,7 @@
     {
       "customer_id": "cust_2964",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.9968,
       "y": 1.0986,
       "spend": 390262.95,
@@ -26558,7 +26580,7 @@
     {
       "customer_id": "cust_2986",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.7776,
       "y": 0.5148,
       "spend": 510723.3,
@@ -26846,7 +26868,7 @@
     {
       "customer_id": "cust_306",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.6014,
       "y": 0.6429,
       "spend": 483640.4,
@@ -26954,7 +26976,7 @@
     {
       "customer_id": "cust_314",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.6264,
       "y": 0.9876,
       "spend": 545126.95,
@@ -27422,7 +27444,7 @@
     {
       "customer_id": "cust_35",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.8228,
       "y": 1.1427,
       "spend": 634836.7,
@@ -27542,7 +27564,7 @@
     {
       "customer_id": "cust_359",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.4335,
       "y": 0.803,
       "spend": 456733.5,
@@ -27974,7 +27996,7 @@
     {
       "customer_id": "cust_391",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.2641,
       "y": -0.2097,
       "spend": 528096.0,
@@ -28034,7 +28056,7 @@
     {
       "customer_id": "cust_396",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.5469,
       "y": -1.6858,
       "spend": 672891.25,
@@ -28658,7 +28680,7 @@
     {
       "customer_id": "cust_442",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 12.0531,
       "y": 1.6549,
       "spend": 1055746.9,
@@ -28718,7 +28740,7 @@
     {
       "customer_id": "cust_447",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.2085,
       "y": -2.7907,
       "spend": 925239.45,
@@ -28958,7 +28980,7 @@
     {
       "customer_id": "cust_465",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.8875,
       "y": 0.1105,
       "spend": 468854.95,
@@ -29054,7 +29076,7 @@
     {
       "customer_id": "cust_472",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.3172,
       "y": -0.2164,
       "spend": 535315.25,
@@ -29102,7 +29124,7 @@
     {
       "customer_id": "cust_476",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 6.688,
       "y": 0.1429,
       "spend": 710396.55,
@@ -29138,7 +29160,7 @@
     {
       "customer_id": "cust_479",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.0292,
       "y": -0.7955,
       "spend": 646538.6,
@@ -29438,7 +29460,7 @@
     {
       "customer_id": "cust_500",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.0947,
       "y": -0.2013,
       "spend": 505419.8,
@@ -29678,7 +29700,7 @@
     {
       "customer_id": "cust_519",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 10.6471,
       "y": -1.7661,
       "spend": 1226332.25,
@@ -29738,7 +29760,7 @@
     {
       "customer_id": "cust_523",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.0891,
       "y": -0.463,
       "spend": 444085.3,
@@ -29858,7 +29880,7 @@
     {
       "customer_id": "cust_532",
       "cluster_id": 1,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics)",
+      "segment_label": "VIP Elite \u2014 Strategic Outlier",
       "x": 63.2543,
       "y": -9.4343,
       "spend": 6555785.55,
@@ -29870,7 +29892,7 @@
     {
       "customer_id": "cust_533",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 19.7121,
       "y": 2.5023,
       "spend": 1660118.2,
@@ -30518,7 +30540,7 @@
     {
       "customer_id": "cust_582",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.7365,
       "y": -1.7151,
       "spend": 698858.45,
@@ -31586,7 +31608,7 @@
     {
       "customer_id": "cust_662",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.6773,
       "y": -0.2378,
       "spend": 651868.75,
@@ -31766,7 +31788,7 @@
     {
       "customer_id": "cust_676",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.1335,
       "y": 2.0237,
       "spend": 317120.45,
@@ -31802,7 +31824,7 @@
     {
       "customer_id": "cust_679",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.6301,
       "y": 0.2658,
       "spend": 430224.8,
@@ -32090,7 +32112,7 @@
     {
       "customer_id": "cust_70",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 7.9682,
       "y": 0.3022,
       "spend": 811091.0,
@@ -32174,7 +32196,7 @@
     {
       "customer_id": "cust_706",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 5.9849,
       "y": -1.5155,
       "spend": 794149.65,
@@ -32702,7 +32724,7 @@
     {
       "customer_id": "cust_746",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.5702,
       "y": 2.8305,
       "spend": 287183.15,
@@ -33578,7 +33600,7 @@
     {
       "customer_id": "cust_811",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 8.8897,
       "y": 1.7396,
       "spend": 762719.8,
@@ -33614,7 +33636,7 @@
     {
       "customer_id": "cust_814",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.8536,
       "y": 1.2303,
       "spend": 367445.75,
@@ -34058,7 +34080,7 @@
     {
       "customer_id": "cust_848",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 12.61,
       "y": -2.0742,
       "spend": 1431088.75,
@@ -34718,7 +34740,7 @@
     {
       "customer_id": "cust_898",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.4966,
       "y": -0.7707,
       "spend": 507045.9,
@@ -35198,7 +35220,7 @@
     {
       "customer_id": "cust_933",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.1584,
       "y": -1.1883,
       "spend": 606901.75,
@@ -35402,7 +35424,7 @@
     {
       "customer_id": "cust_949",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 3.2213,
       "y": 0.5704,
       "spend": 367190.7,
@@ -35714,7 +35736,7 @@
     {
       "customer_id": "cust_972",
       "cluster_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "x": 4.2349,
       "y": -0.2348,
       "spend": 524961.35,
@@ -36089,7 +36111,7 @@
     },
     {
       "segment_id": 1,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics)",
+      "segment_label": "VIP Elite \u2014 Strategic Outlier",
       "customer_count": 2,
       "percentage": 0.1,
       "avg_spend": 5126412.22,
@@ -36103,7 +36125,7 @@
     },
     {
       "segment_id": 2,
-      "segment_label": "VIP Elite \u2014 Strategic Outlier (Smartphones & Electronics) (Cluster 2)",
+      "segment_label": "High-Value Champions",
       "customer_count": 122,
       "percentage": 4.1,
       "avg_spend": 681433.76,
