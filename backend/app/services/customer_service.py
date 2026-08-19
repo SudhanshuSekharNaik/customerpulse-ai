@@ -34,6 +34,16 @@ class CustomerService:
         total_count = query.count()
         customers = query.order_by(desc(Customer.total_revenue)).offset(offset).limit(limit).all()
 
+        meta_path = os.path.join("ml", "models", "segmentation_metadata.json")
+        p99_spend = 842398.27
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, "r") as f:
+                    meta = json.load(f)
+                    p99_spend = float(meta.get("outlier_policy", {}).get("p99_spend_threshold", 842398.27))
+            except Exception:
+                pass
+
         results = []
         for c in customers:
             churn_pred = next((p for p in c.predictions if p.model_type == "churn"), None)
@@ -45,6 +55,8 @@ class CustomerService:
             spend = float(c.total_revenue or 0.0)
             orders = int(c.total_orders or 1)
             churn_factor = float(churn_prob) if churn_prob is not None else 0.25
+            is_vip = bool(spend >= p99_spend and p99_spend > 0)
+            strat_tier = f"VIP Elite (Top 1% Spend Outlier — >₹{p99_spend:,.0f})" if is_vip else "Standard Operational Tier"
 
             # 1. Value sub-score (0 to 40 pts) using continuous logarithmic scaling so 45k vs 60k differ clearly
             value_pts = min(40.0, max(5.0, (math.log1p(spend) / math.log1p(100000.0)) * 35.0 + min(5.0, orders * 0.8)))
@@ -70,6 +82,8 @@ class CustomerService:
                 "total_revenue": round(c.total_revenue, 2),
                 "total_orders": c.total_orders,
                 "is_cold_start": is_cold,
+                "is_vip_outlier": is_vip,
+                "strategic_tier": strat_tier,
                 "current_state": c.state.current_state if c.state else "UNKNOWN",
                 "segment_label": c.segment.segment_label if c.segment else "Unassigned",
                 "churn_probability": churn_prob,
@@ -207,9 +221,23 @@ class CustomerService:
             "RECOVERING": "Re-activated customer exhibiting return purchase momentum.",
         }
 
-        c_rec = float(feat_dict.get("recency_days", 15.0))
-        c_freq = float(feat_dict.get("frequency_30d", 1.0))
-        c_aov = float(feat_dict.get("aov", 1200.0))
+        meta_path = os.path.join("ml", "models", "segmentation_metadata.json")
+        p99_spend = 842398.27
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, "r") as f:
+                    meta = json.load(f)
+                    p99_spend = float(meta.get("outlier_policy", {}).get("p99_spend_threshold", 842398.27))
+            except Exception:
+                pass
+
+        c_spend = float(customer.total_revenue or 0.0)
+        is_vip = bool(c_spend >= p99_spend and p99_spend > 0)
+        strat_tier = f"VIP Elite (Top 1% Spend Outlier — >₹{p99_spend:,.0f})" if is_vip else "Standard Operational Tier"
+
+        c_rec = float(feat_dict.get("recency_days", 15.0)) if feat_dict else 15.0
+        c_freq = float(feat_dict.get("frequency_30d", 1.0)) if feat_dict else 1.0
+        c_aov = float(feat_dict.get("aov", 1200.0)) if feat_dict else 1200.0
         cohort_rec_avg = 31.2
         cohort_freq_avg = 1.8
         cohort_aov_avg = 28534.0
@@ -230,6 +258,18 @@ class CustomerService:
                 "recency_deviation_days": rec_dev,
                 "frequency_deviation": freq_dev,
                 "aov_deviation": aov_dev,
+            },
+            "behavioral_segmentation": {
+                "behavioral_cluster": seg_val,
+                "strategic_outlier_tier": strat_tier,
+                "is_vip_outlier": is_vip,
+                "p99_spend_threshold": p99_spend,
+                "governance_policy": (
+                    f"Customer spend (₹{c_spend:,.2f}) exceeds the 99th percentile threshold (₹{p99_spend:,.2f}). "
+                    "Preserved as a governed Strategic VIP Outlier with white-glove executive concierge in Next-Best-Action."
+                    if is_vip else
+                    "Standard behavioral cohort partitioning applied."
+                ),
             },
             "lifecycle_state_machine": {
                 "current_state": st_val,
@@ -273,6 +313,8 @@ class CustomerService:
             "total_revenue": round(customer.total_revenue, 2),
             "total_orders": customer.total_orders,
             "is_cold_start": is_cold,
+            "is_vip_outlier": is_vip,
+            "strategic_tier": strat_tier,
             "features": feat_dict,
             "current_state": customer.state.current_state if customer.state else "UNKNOWN",
             "previous_state": customer.state.previous_state if customer.state else None,

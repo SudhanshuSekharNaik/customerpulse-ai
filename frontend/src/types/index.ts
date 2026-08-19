@@ -10,6 +10,8 @@ export interface CustomerSummary {
   is_cold_start: boolean;
   current_state: string;
   segment_label: string;
+  is_vip_outlier?: boolean;
+  strategic_tier?: string;
   churn_probability?: number;
   opportunity_score?: number;
 }
@@ -89,6 +91,8 @@ export interface CustomerDetail {
   previous_state?: string;
   segment_label: string;
   segment_id?: number;
+  is_vip_outlier?: boolean;
+  strategic_tier?: string;
   churn_prediction?: {
     predicted_class: string;
     predicted_probability?: number | null;

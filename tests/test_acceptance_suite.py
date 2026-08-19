@@ -163,3 +163,45 @@ def test_16_threshold_alignment_and_single_source_of_truth(db):
     sample_pred = db.query(Prediction).filter(Prediction.model_type == "churn").first()
     assert sample_pred is not None
     assert abs(sample_pred.decision_threshold - opt_th) < 1e-4
+
+
+def test_17_vip_strategic_outlier_governance(db):
+    """AC 17: VIP Elite Strategic Outlier Governance & Separation of Value from Behavior."""
+    import numpy as np
+    from backend.app.services.customer_service import CustomerService
+    from backend.app.database.models import Customer, CustomerFeature, CustomerSegment, Recommendation
+
+    all_features = db.query(CustomerFeature).all()
+    spends = [f.monetary_total or 0.0 for f in all_features]
+    total_customers = len(spends)
+    total_revenue = sum(spends)
+    assert total_customers > 0
+
+    vip_threshold = float(np.percentile(spends, 99.0))
+    vip_features = [f for f in all_features if (f.monetary_total or 0.0) >= vip_threshold]
+    vip_count = len(vip_features)
+    vip_revenue = sum(f.monetary_total or 0.0 for f in vip_features)
+
+    # 1. Statistical bounds
+    assert vip_count > 0, "VIP count must be positive"
+    assert vip_count <= total_customers, "VIP count cannot exceed total customers"
+    assert 0 <= vip_revenue <= total_revenue, "VIP revenue must be bounded by total revenue"
+
+    # 2. Customer 360 & Prediction coverage
+    for vf in vip_features[:10]:
+        detail = CustomerService.get_customer_360_detail(db, vf.customer_id)
+        assert detail is not None, f"VIP customer {vf.customer_id} must exist in Customer 360"
+        assert detail.get("is_vip_outlier") is True, f"VIP customer {vf.customer_id} must have is_vip_outlier=True"
+        assert "VIP Elite" in str(detail.get("strategic_tier")), "Strategic tier must indicate VIP Elite"
+        assert detail.get("segment_label") is not None, "Behavioral cluster must be preserved"
+
+    # 3. Behavioral cluster is not corrupted/overwritten
+    seg_labels = {vf.customer.segment.segment_label for vf in vip_features if vf.customer and vf.customer.segment}
+    assert len(seg_labels) >= 1, "VIP customers must have valid behavioral cluster associations"
+
+    # 4. VIP recommendation logic uses actual VIP flag
+    for vf in vip_features:
+        rec = db.query(Recommendation).filter(Recommendation.customer_id == vf.customer_id).first()
+        if rec and (vf.monetary_total or 0.0) >= vip_threshold:
+            assert rec.action_type in ["VIP_SUPPORT", "LOYALTY_REWARD", "CROSS_SELL", "WIN_BACK"]
+

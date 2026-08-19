@@ -222,7 +222,24 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <td>
                     <span className={`badge badge-state-${c.current_state}`}>{c.current_state}</span>
                   </td>
-                  <td style={{ color: "var(--text-secondary)", fontSize: "0.8rem" }}>{c.segment_label}</td>
+                  <td style={{ color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                      <span>{c.segment_label}</span>
+                      {c.is_vip_outlier && (
+                        <span style={{
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          color: "#F59E0B",
+                          background: "rgba(245, 158, 11, 0.15)",
+                          border: "1px solid rgba(245, 158, 11, 0.4)",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                        }}>
+                          VIP Elite (&gt;99th pctl)
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td style={{ fontWeight: 600 }}>₹{c.total_revenue?.toFixed(2)}</td>
                   <td>{c.total_orders}</td>
                   <td>{c.total_events}</td>
@@ -293,13 +310,26 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#FFFFFF" }}>
                     Customer 360: <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-cyan)" }}>{selectedCustomerId}</span>
                   </h3>
-                  <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "4px", alignItems: "center", flexWrap: "wrap" }}>
                     {customerDetail?.current_state && (
                       <span className={`badge badge-state-${customerDetail.current_state}`}>{customerDetail.current_state}</span>
                     )}
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                      Segment: <strong style={{ color: "var(--text-primary)" }}>{customerDetail?.segment_label}</strong>
+                      Behavioral Cluster: <strong style={{ color: "var(--text-primary)" }}>{customerDetail?.segment_label}</strong>
                     </span>
+                    {customerDetail?.is_vip_outlier && (
+                      <span style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        color: "#F59E0B",
+                        background: "rgba(245, 158, 11, 0.15)",
+                        border: "1px solid rgba(245, 158, 11, 0.4)",
+                        padding: "2px 8px",
+                        borderRadius: "6px",
+                      }}>
+                        ★ {customerDetail.strategic_tier || "VIP Elite (Top 1% Spend Outlier)"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
