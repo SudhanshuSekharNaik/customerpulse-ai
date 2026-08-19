@@ -205,3 +205,45 @@ def test_17_vip_strategic_outlier_governance(db):
         if rec and (vf.monetary_total or 0.0) >= vip_threshold:
             assert rec.action_type in ["VIP_SUPPORT", "LOYALTY_REWARD", "CROSS_SELL", "WIN_BACK"]
 
+
+def test_18_transparent_expected_value_math(db):
+    """AC 18: Transparent Causal Uplift & Expected-Value Formula Validation."""
+    from backend.app.services.customer_service import CustomerService
+    from backend.app.services.recommendation_service import RecommendationService
+    from backend.app.api.analytics import get_executive_overview
+
+    recs = db.query(Recommendation).all()
+    assert len(recs) == 3000
+
+    # 1. Canonical formula verification for all positive-value recommendations
+    positive_recs = [r for r in recs if r.action_type != "NO_ACTION"]
+    assert len(positive_recs) >= 2800
+
+    for r in positive_recs:
+        ev = r.evidence
+        assert ev is not None, f"Recommendation {r.recommendation_id} must have evidence"
+        dp = float(ev.get("incremental_uplift", 0.0))
+        margin = float(ev.get("expected_incremental_margin", 0.0))
+        cost = float(ev.get("intervention_cost", 0.0))
+        exp_val = float(ev.get("expected_value", 0.0))
+
+        # Expected Value = ΔP × Margin − Cost
+        calc_val = round(dp * margin - cost, 2)
+        assert abs(calc_val - exp_val) < 0.05, f"Math mismatch for {r.customer_id}: calc={calc_val} vs recorded={exp_val}"
+        assert abs(r.expected_impact - exp_val) < 0.05, "expected_impact must match expected_value"
+
+    # 2. Customer 360 synchronization with Next-Best-Action
+    for r in positive_recs[:20]:
+        detail = CustomerService.get_customer_360_detail(db, r.customer_id)
+        assert detail is not None
+        top_rec = detail.get("top_recommendation")
+        assert top_rec is not None
+        assert top_rec["action_type"] == r.action_type
+        assert abs(top_rec["expected_impact"] - r.expected_impact) < 0.05
+
+    # 3. Executive Pulse Total Opportunity consistency
+    overview = get_executive_overview(db)
+    total_impact = sum(r.expected_impact for r in recs if r.expected_impact > 0)
+    assert abs(overview["addressable_portfolio_uplift"] - round(float(total_impact), 2)) < 0.1
+
+

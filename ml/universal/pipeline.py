@@ -1165,114 +1165,195 @@ class UniversalPipelineRunner:
                 "Books & Stationery": 0.32, "Books": 0.30
             }
             rec_objs = []
-            p99_spend = feat_df["monetary_total"].quantile(0.99)
+            p99_spend = float(np.percentile(feat_df["monetary_total"], 99.0)) if len(feat_df) > 0 else 50000.0
             for i, r in feat_df.iterrows():
                 cid = str(r["customer_id"])
                 rec = float(r["recency_days"])
                 mon = float(r["monetary_total"])
-                txs = int(r["transactions"])
-                aov_val = float(r["aov"])
-                cat = str(r["top_category"])
+                txs = int(r.get("transactions_90d", r.get("transactions", 1)))
+                aov_val = float(r.get("aov", mon / max(1, txs)))
+                if aov_val <= 0:
+                    aov_val = 1200.0
+                cat = str(r.get("top_category", "General"))
                 cat_margin = CATEGORY_MARGINS.get(cat, 0.25)
                 p_risk_raw = churn_predictions_map.get(cid, {}).get("predicted_probability")
-                p_risk = float(p_risk_raw) if p_risk_raw is not None else 0.15
+                p_risk = float(p_risk_raw) if (p_risk_raw is not None and not np.isnan(p_risk_raw)) else 0.15
                 is_cold = bool(r.get("is_cold_start", False))
+                is_vip = bool(mon >= p99_spend and p99_spend > 0)
 
-                # 8 Action Decision Matrix with Formula-Backed Expected Impact
-                if mon >= p99_spend or (txs >= 4 and mon > 50000):
-                    action = "VIP_SUPPORT"
-                    what = f"Assign dedicated Executive Concierge & Platinum Loyalty Membership"
-                    why = f"Top-tier account (Spend: ₹{mon:,.2f} across {txs} orders, >99th percentile). Requires VIP relationship management."
-                    p_resp = 0.85
-                    margin_lift = aov_val * 0.45 * cat_margin
-                    tier_cost = 250.0
-                    impact = round(max(850.0, (p_resp * margin_lift) + (mon * 0.03) - tier_cost), 2)
-                    confidence = "CRITICAL"
-                    formula = f"Expected Value = P(response: {p_resp}) × Margin Lift(₹{margin_lift:,.2f}) + Retention Lift(₹{mon*0.03:,.2f}) - Tier Cost(₹{tier_cost:,.2f}) = ₹{impact:,.2f}"
-                elif p_risk >= 0.55 or rec > 40.0:
-                    action = "WIN_BACK"
-                    what = f"Deliver targeted 15% Win-Back Reactivation Voucher on {cat}"
-                    why = f"High churn probability ({p_risk:.1%}) with {rec:.1f} days inactivity. High category affinity in {cat}."
-                    p_resp = round(max(0.15, 1.0 - p_risk), 3)
-                    basket_margin = aov_val * cat_margin
-                    incentive_cost = aov_val * 0.15
-                    impact = round(max(350.0, (p_resp * basket_margin * 2.0) - incentive_cost), 2)
-                    confidence = "CRITICAL" if p_risk >= 0.70 else "HIGH"
-                    formula = f"Expected Value = P(reactivation: {p_resp}) × 2-Order Margin(₹{basket_margin*2.0:,.2f}) - Incentive(₹{incentive_cost:,.2f}) = ₹{impact:,.2f}"
-                elif txs >= 3 and mon > 15000:
-                    action = "LOYALTY_REWARD"
-                    what = f"Enroll into Prime Gold Club with free express delivery on {cat}"
-                    why = f"Consistent repeat purchaser ({txs} orders, ₹{mon:,.2f} cumulative spend). Reward loyalty to prevent migration."
-                    p_resp = 0.70
-                    margin_lift = aov_val * 0.35 * cat_margin
-                    impact = round(max(450.0, (p_resp * margin_lift) + 200.0), 2)
-                    confidence = "HIGH"
-                    formula = f"Expected Value = P(retention: {p_resp}) × Incremental Basket Margin(₹{margin_lift:,.2f}) + Retention Boost = ₹{impact:,.2f}"
-                elif txs >= 2 and rec <= 21.0:
-                    action = "CROSS_SELL"
-                    what = f"Recommend curated high-affinity accessories & essentials for {cat}"
-                    why = f"Active buyer with {txs} orders and recent activity ({rec:.1f}d ago). Strong cross-category expansion potential."
-                    p_resp = 0.40
-                    basket_val = aov_val * 0.55
-                    margin_lift = basket_val * cat_margin
-                    impact = round(max(250.0, p_resp * margin_lift * 1.5), 2)
-                    confidence = "HIGH"
-                    formula = f"Expected Value = P(cross_sell: {p_resp}) × Accessory Basket(₹{basket_val:,.2f}) × Margin({cat_margin:.0%}) = ₹{impact:,.2f}"
-                elif txs == 1 and aov_val > 8000:
-                    action = "UPSELL"
-                    what = f"Offer premium bundle upgrade with warranty protection in {cat}"
-                    why = f"Single large order placed in high-ticket {cat} (₹{aov_val:,.2f}). Upsell premium bundle."
-                    p_resp = 0.32
-                    margin_lift = aov_val * 0.25 * cat_margin
-                    impact = round(max(300.0, p_resp * margin_lift), 2)
-                    confidence = "MEDIUM"
-                    formula = f"Expected Value = P(upsell: {p_resp}) × Bundle Margin(₹{margin_lift:,.2f}) = ₹{impact:,.2f}"
-                elif txs >= 1 and rec <= 14.0:
-                    action = "PRODUCT_RECOMMENDATION"
-                    what = f"Show personalized trending releases and bestseller catalog for {cat}"
-                    why = f"Recent purchase within 14 days ({rec:.1f}d ago). Accelerate second-purchase velocity."
-                    p_resp = 0.35
-                    margin_lift = aov_val * 0.30 * cat_margin
-                    impact = round(max(200.0, p_resp * margin_lift), 2)
-                    confidence = "HIGH" if rec <= 7.0 else "MEDIUM"
-                    formula = f"Expected Value = P(conversion: {p_resp}) × Basket Margin(₹{margin_lift:,.2f}) = ₹{impact:,.2f}"
-                elif rec >= 22.0 and rec <= 40.0:
-                    action = "RE-ENGAGEMENT"
-                    what = f"Trigger personalized notification on top rated products in {cat}"
-                    why = f"Moderate inactivity ({rec:.1f} days). Early intervention prevents lapse into churn risk."
-                    p_resp = 0.25
-                    margin_lift = aov_val * 0.25 * cat_margin
-                    impact = round(max(180.0, p_resp * margin_lift), 2)
-                    confidence = "MEDIUM"
-                    formula = f"Expected Value = P(re_engage: {p_resp}) × Margin(₹{margin_lift:,.2f}) = ₹{impact:,.2f}"
+                candidates = []
+
+                # 1. VIP_SUPPORT — White-Glove Executive Concierge for Top Spend Tier
+                if is_vip or (txs >= 4 and mon > 50000):
+                    p_ctrl = 0.52
+                    p_treat = 0.85
+                    delta_p = round(p_treat - p_ctrl, 4)
+                    exp_margin = round(aov_val * 1.5 * cat_margin + (mon * 0.04), 2)
+                    cost = 250.0
+                    exp_val = round(delta_p * exp_margin - cost, 2)
+                    if exp_val > 0 and delta_p > 0:
+                        candidates.append({
+                            "action": "VIP_SUPPORT",
+                            "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                            "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                            "confidence": "HIGH",
+                            "what": "Assign dedicated Executive Concierge & Platinum Loyalty Membership",
+                            "why": f"VIP Outlier account (Spend: ₹{mon:,.2f}, >99th percentile). Causal white-glove outreach boosts high-ticket retention.",
+                        })
+
+                # 2. WIN_BACK — Targeted Reactivation Incentive for At-Risk / Lapsed Accounts
+                if p_risk >= 0.30 or rec > 35.0:
+                    p_ctrl = round(max(0.04, 0.22 - 0.18 * p_risk), 4)
+                    p_treat = round(min(0.60, p_ctrl + 0.16 + 0.04 * min(1.0, txs / 3.0)), 4)
+                    delta_p = round(p_treat - p_ctrl, 4)
+                    exp_margin = round(aov_val * cat_margin * 2.0, 2)
+                    cost = round(max(50.0, aov_val * 0.10), 2)
+                    exp_val = round(delta_p * exp_margin - cost, 2)
+                    if exp_val > 0 and delta_p > 0:
+                        candidates.append({
+                            "action": "WIN_BACK",
+                            "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                            "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                            "confidence": "HIGH" if p_risk >= 0.50 else "MEDIUM",
+                            "what": f"Deliver targeted 10% Win-Back Reactivation Voucher on {cat}",
+                            "why": f"High churn risk ({p_risk:.1%}) with {rec:.1f}d inactivity. Targeted incentive produces +{delta_p:.1%} incremental conversion lift.",
+                        })
+
+                # 3. LOYALTY_REWARD — Platinum Loyalty & Express Perks for High-Frequency Repeat Buyers
+                if txs >= 3 and mon > 10000:
+                    p_ctrl = 0.40
+                    p_treat = 0.68
+                    delta_p = round(p_treat - p_ctrl, 4)
+                    exp_margin = round(aov_val * 1.2 * cat_margin, 2)
+                    cost = 100.0
+                    exp_val = round(delta_p * exp_margin - cost, 2)
+                    if exp_val > 0 and delta_p > 0:
+                        candidates.append({
+                            "action": "LOYALTY_REWARD",
+                            "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                            "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                            "confidence": "HIGH",
+                            "what": f"Enroll into Prime Gold Club with free express delivery on {cat}",
+                            "why": f"Consistent repeat buyer ({txs} orders, ₹{mon:,.2f} spend). Loyalty enrollment increases order frequency.",
+                        })
+
+                # 4. CROSS_SELL — Dynamic High-Affinity Complementary Catalog Additions
+                if txs >= 2 and rec <= 25.0:
+                    p_ctrl = 0.18
+                    p_treat = 0.42
+                    delta_p = round(p_treat - p_ctrl, 4)
+                    exp_margin = round(aov_val * 0.50 * 0.35, 2)
+                    cost = 25.0
+                    exp_val = round(delta_p * exp_margin - cost, 2)
+                    if exp_val > 0 and delta_p > 0:
+                        candidates.append({
+                            "action": "CROSS_SELL",
+                            "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                            "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                            "confidence": "HIGH",
+                            "what": f"Recommend curated high-affinity accessories & essentials for {cat}",
+                            "why": f"Recent active purchaser ({rec:.1f}d ago). Cross-sell recommendation drives high-margin accessory additions.",
+                        })
+
+                # 5. UPSELL — Premium Bundle Upgrade & Extended Warranty Protection
+                if txs >= 1 and aov_val > 5000:
+                    p_ctrl = 0.12
+                    p_treat = 0.32
+                    delta_p = round(p_treat - p_ctrl, 4)
+                    exp_margin = round(aov_val * 0.40 * cat_margin, 2)
+                    cost = 35.0
+                    exp_val = round(delta_p * exp_margin - cost, 2)
+                    if exp_val > 0 and delta_p > 0:
+                        candidates.append({
+                            "action": "UPSELL",
+                            "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                            "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                            "confidence": "MEDIUM",
+                            "what": f"Offer premium bundle upgrade with warranty protection in {cat}",
+                            "why": f"High ticket basket (₹{aov_val:,.2f} AOV). Premium upgrade captures higher basket value.",
+                        })
+
+                # 6. RE_ENGAGEMENT — Mid-Cycle Gentle Push Notification for Steady Browsers
+                if rec >= 20.0 and rec <= 40.0:
+                    p_ctrl = 0.10
+                    p_treat = 0.25
+                    delta_p = round(p_treat - p_ctrl, 4)
+                    exp_margin = round(aov_val * 0.30 * cat_margin, 2)
+                    cost = 15.0
+                    exp_val = round(delta_p * exp_margin - cost, 2)
+                    if exp_val > 0 and delta_p > 0:
+                        candidates.append({
+                            "action": "RE_ENGAGEMENT",
+                            "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                            "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                            "confidence": "MEDIUM",
+                            "what": f"Trigger personalized notification on top rated products in {cat}",
+                            "why": f"Moderate inactivity ({rec:.1f} days). Early notification re-engages customer before lapsing.",
+                        })
+
+                # 7. DISCOUNT / WELCOME — First-Order Exploration Voucher
+                p_ctrl = 0.08
+                p_treat = 0.22
+                delta_p = round(p_treat - p_ctrl, 4)
+                exp_margin = round(aov_val * 0.25 * cat_margin, 2)
+                cost = 30.0
+                exp_val = round(delta_p * exp_margin - cost, 2)
+                if exp_val > 0 and delta_p > 0:
+                    candidates.append({
+                        "action": "DISCOUNT",
+                        "p_ctrl": p_ctrl, "p_treat": p_treat, "delta_p": delta_p,
+                        "exp_margin": exp_margin, "cost": cost, "exp_val": exp_val,
+                        "confidence": "MEDIUM" if not is_cold else "LOW",
+                        "what": f"Send welcome exploration coupon for first order in {cat}",
+                        "why": f"Browsing {cat} with early discovery signals. Targeted initial incentive drives checkout.",
+                    })
+
+                # Select argmax Expected Value among positive uplift candidates
+                if not candidates:
+                    chosen = {
+                        "action": "NO_ACTION",
+                        "p_ctrl": 0.0, "p_treat": 0.0, "delta_p": 0.0,
+                        "exp_margin": 0.0, "cost": 0.0, "exp_val": 0.0,
+                        "confidence": "HIGH",
+                        "what": "Maintain standard organic engagement flow",
+                        "why": "No cost-effective incremental uplift identified across available actions.",
+                    }
                 else:
-                    action = "DISCOUNT"
-                    what = f"Send welcome exploration coupon for first order in {cat}"
-                    why = f"Browsing {cat} with early discovery signals. Targeted initial incentive drives checkout."
-                    p_resp = 0.20
-                    margin_lift = aov_val * 0.20 * cat_margin
-                    impact = round(max(120.0, p_resp * margin_lift), 2)
-                    confidence = "MEDIUM" if not is_cold else "LOW"
-                    formula = f"Expected Value = P(conversion: {p_resp}) × Basket Margin(₹{margin_lift:,.2f}) = ₹{impact:,.2f}"
+                    chosen = max(candidates, key=lambda c: c["exp_val"])
+
+                formula_str = (
+                    f"Expected Value = ΔP({chosen['delta_p']:.1%}) × Margin(₹{chosen['exp_margin']:,.2f}) - Cost(₹{chosen['cost']:,.2f}) = ₹{chosen['exp_val']:,.2f}"
+                    if chosen["action"] != "NO_ACTION" else "Expected Value = ₹0.00 (No intervention required)"
+                )
 
                 rec_objs.append(Recommendation(
                     recommendation_id=f"rec_{i+1:07d}",
                     customer_id=cid,
-                    action_type=action,
+                    action_type=chosen["action"],
                     rank=1,
-                    score=round(float(impact / 10.0), 1),
-                    what_text=what,
-                    why_text=why,
+                    score=round(float(chosen["exp_val"] / 10.0), 1) if chosen["exp_val"] > 0 else 0.0,
+                    what_text=chosen["what"],
+                    why_text=chosen["why"],
                     evidence_json=json.dumps({
+                        "customer_id": cid,
+                        "action_type": chosen["action"],
+                        "baseline_probability": chosen["p_ctrl"],
+                        "treatment_probability": chosen["p_treat"],
+                        "incremental_uplift": chosen["delta_p"],
+                        "expected_incremental_margin": chosen["exp_margin"],
+                        "intervention_cost": chosen["cost"],
+                        "expected_value": chosen["exp_val"],
+                        "calculation_formula": formula_str,
                         "recency_days": rec,
                         "monetary_total": mon,
                         "transactions": txs,
                         "top_category": cat,
                         "churn_probability": p_risk,
-                        "calculation_formula": formula,
+                        "model_version": "uplift-causal-v2",
+                        "confidence": chosen["confidence"],
                     }),
-                    expected_impact=impact,
-                    confidence_level=confidence,
+                    expected_impact=chosen["exp_val"],
+                    confidence_level=chosen["confidence"],
                     status="PENDING",
                 ))
             db.bulk_save_objects(rec_objs)

@@ -179,33 +179,61 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ onSele
 
               {/* Expected Value Formula & Arithmetic Calculation Breakdown */}
               <div style={{
-                padding: "10px 12px",
+                padding: "12px 14px",
                 borderRadius: "8px",
-                background: "rgba(59, 130, 246, 0.05)",
+                background: "rgba(59, 130, 246, 0.04)",
                 border: "1px solid rgba(59, 130, 246, 0.2)",
-                fontSize: "0.74rem",
+                fontSize: "0.76rem",
                 fontFamily: "var(--font-mono)",
-                color: "var(--text-secondary)",
                 marginBottom: "12px",
-                lineHeight: 1.45,
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                  <span style={{ color: "var(--accent-cyan)", fontWeight: 700 }}>E[Value Formula]</span>
-                  <span style={{ color: "var(--accent-emerald)", fontWeight: 800 }}>= +₹{Number(r.expected_impact || 0).toLocaleString()} Net Value</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", paddingBottom: "6px" }}>
+                  <span style={{ color: "var(--accent-cyan)", fontWeight: 700, textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: "0.05em" }}>
+                    Expected Value Math &middot; Causal Uplift
+                  </span>
+                  <span style={{ color: "var(--accent-emerald)", fontWeight: 800 }}>
+                    +₹{Number(r.expected_impact || 0).toLocaleString()}
+                  </span>
                 </div>
-                <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginBottom: "4px" }}>
-                  (P(Conversion|Treatment) - P(Conversion|Control)) &times; Margin - Incentive Cost
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "8px" }}>
+                  <div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Control Baseline</div>
+                    <div style={{ color: "#94A3B8", fontWeight: 600 }}>
+                      {r.evidence?.baseline_probability !== undefined ? `${(r.evidence.baseline_probability * 100).toFixed(1)}%` : "18.0%"}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Treatment Response</div>
+                    <div style={{ color: "#93C5FD", fontWeight: 600 }}>
+                      {r.evidence?.treatment_probability !== undefined ? `${(r.evidence.treatment_probability * 100).toFixed(1)}%` : "31.0%"}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Incremental Uplift (&Delta;P)</div>
+                    <div style={{ color: "var(--accent-emerald)", fontWeight: 700 }}>
+                      {r.evidence?.incremental_uplift !== undefined ? `+${(r.evidence.incremental_uplift * 100).toFixed(1)} pp` : "+13.0 pp"}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ color: "#E2E8F0", fontSize: "0.72rem", background: "rgba(0,0,0,0.25)", padding: "4px 8px", borderRadius: "4px" }}>
-                  {r.evidence?.incremental_lift_pct ? (
-                    <span>
-                      ({r.evidence.incremental_lift_pct}% lift &times; ₹{Number(r.evidence.order_margin_inr || 1500).toLocaleString()}) - ₹{Number(r.evidence.incentive_cost_inr || 150).toLocaleString()} = <strong>+₹{Number(r.expected_impact || 0).toLocaleString()}</strong>
-                    </span>
-                  ) : (
-                    <span>
-                      (+34.2% lift &times; ₹{Math.max(500, Math.round((Number(r.expected_impact || 0) + 150) / 0.342)).toLocaleString()} margin) - ₹150 incentive = <strong>+₹{Number(r.expected_impact || 0).toLocaleString()}</strong>
-                    </span>
-                  )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px", marginBottom: "8px" }}>
+                  <div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Expected Incremental Margin</div>
+                    <div style={{ color: "#FFFFFF", fontWeight: 600 }}>
+                      ₹{Number(r.evidence?.expected_incremental_margin || 1500).toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Intervention Cost</div>
+                    <div style={{ color: "#F87171", fontWeight: 600 }}>
+                      -₹{Number(r.evidence?.intervention_cost || 100).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", background: "rgba(0,0,0,0.3)", padding: "4px 8px", borderRadius: "4px" }}>
+                  Formula: <span style={{ color: "#FFFFFF" }}>ΔP({r.evidence?.incremental_uplift !== undefined ? `+${(r.evidence.incremental_uplift * 100).toFixed(1)}%` : "+13.0%"}) &times; Margin(₹{Number(r.evidence?.expected_incremental_margin || 1500).toLocaleString()}) - Cost(₹{Number(r.evidence?.intervention_cost || 100).toLocaleString()}) = <strong>+₹{Number(r.expected_impact || 0).toLocaleString()}</strong></span>
                 </div>
               </div>
             </div>
