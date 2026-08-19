@@ -438,7 +438,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
               <Search size={14} style={{ position: "absolute", left: "10px", color: "var(--text-muted)" }} />
               <input
                 type="text"
-                placeholder="Search customer (e.g. AMZ_CUST_00848)..."
+                placeholder="Search customer (e.g. cust_1)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{

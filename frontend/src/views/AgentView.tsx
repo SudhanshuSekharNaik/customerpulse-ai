@@ -24,7 +24,7 @@ export const AgentView: React.FC = () => {
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
 
   const SUGGESTED_QUERIES = [
-    "What is the current state and churn risk for customer CUST_00001?",
+    "What is the current state and churn risk for customer cust_1?",
     "Why are high-value customers in the DECLINING state at risk?",
     "Which customer segment has the highest average revenue and cart conversion?",
     "What are the recommended actions for at-risk customers this week?",
@@ -52,7 +52,7 @@ export const AgentView: React.FC = () => {
   useEffect(() => {
     // Auto-run initial agent audit so actual 8-step execution trace is visible on load
     if (chatHistory.length === 0) {
-      handleSend("What is the current state and churn risk for customer CUST_00001?");
+      handleSend("What is the current state and churn risk for customer cust_1?");
     }
   }, []);
 

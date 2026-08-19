@@ -26,7 +26,7 @@ def test_amazon_benchmark_zero_fabrication():
         generate_amazon_demo_csv()
 
     df = pd.read_csv(demo_path)
-    assert len(df) == 15000
+    assert len(df) == 12000
     expected_unique_customers = int(df["customer_id"].nunique())
     assert expected_unique_customers == 3000
     sales_col = "sales_amount_inr" if "sales_amount_inr" in df.columns else "sales_amount"

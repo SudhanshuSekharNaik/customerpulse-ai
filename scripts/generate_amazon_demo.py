@@ -1,5 +1,5 @@
 """Generate the standardized Amazon E-Commerce Benchmark Dataset.
-Contains ~15,000 order transactions across exactly 3,000 unique customer accounts.
+Contains exactly 12,000 order transactions across exactly 3,000 unique customer accounts (cust_1 to cust_3000).
 """
 
 import os
@@ -14,9 +14,10 @@ def generate_amazon_demo_csv():
     np.random.seed(42)
 
     n_customers = 3000
-    n_extra_orders = 12000  # Total = 3000 base (1 per customer) + 12000 extra = 15,000 orders
+    total_target_orders = 12000
+    n_extra_orders = total_target_orders - n_customers  # 9,000 extra orders distributed by Pareto
 
-    customer_ids = [f"CUST_{i+1:05d}" for i in range(n_customers)]
+    customer_ids = [f"cust_{i+1}" for i in range(n_customers)]
     cities = ["Bengaluru", "Mumbai", "Delhi NCR", "Hyderabad", "Chennai", "Pune", "Kolkata", "Ahmedabad", "Jaipur"]
     cust_city_map = {cid: random.choice(cities) for cid in customer_ids}
 
@@ -71,21 +72,19 @@ def generate_amazon_demo_csv():
     # Step A: 1 guaranteed order for every customer so all 3,000 customers exist
     assigned_orders = list(customer_ids)
 
-    # Step B: Additional 12,000 orders distributed according to activity power-law
+    # Step B: Additional 9,000 orders distributed according to activity power-law -> Exactly 12,000 orders
     extra_assigned = np.random.choice(customer_ids, size=n_extra_orders, p=cust_weights).tolist()
     assigned_orders.extend(extra_assigned)
     random.shuffle(assigned_orders)
 
-    total_orders_count = len(assigned_orders)
     rows = []
 
     for i, cid in enumerate(assigned_orders):
         city = cust_city_map[cid]
 
-        # Random timestamp with peak shopping weights (7 PM - 11 PM and 1 PM - 3 PM)
-        # For CUST_00090 (cust_90), ensure last order is around 42-45 days ago
-        if cid == "CUST_00090":
-            rand_day_offset = random.uniform(10, 138)  # max date is ~42 days before end_date
+        # For cust_90, ensure last order is around 42-45 days ago for demonstration
+        if cid == "cust_90":
+            rand_day_offset = random.uniform(10, 138)
         else:
             rand_day_offset = random.uniform(0, 180)
 
@@ -137,7 +136,7 @@ def generate_amazon_demo_csv():
     df = df.sort_values(by="order_date").reset_index(drop=True)
     out_path = "data/amazon_ecommerce_demo.csv"
     df.to_csv(out_path, index=False)
-    print(f"Generated {len(df)} orders across {df['customer_id'].nunique()} unique customers -> {out_path}")
+    print(f"Generated {len(df)} orders across {df['customer_id'].nunique()} unique customers (cust_1..cust_3000) -> {out_path}")
     print(f"Total Sales Revenue: INR {df['sales_amount'].sum():,.2f}")
     return out_path
 

@@ -44,8 +44,8 @@ class SegmentLabeler:
             freq_diff_str = f"+{freq_diff_pct:.0f}%" if freq_diff_pct >= 0 else f"{freq_diff_pct:.0f}%"
 
             # Baseline archetype assignment
-            if s_mon >= cohort_mon * 3.0:
-                base_label = "Ultra-High-Value Outliers"
+            if s_mon >= cohort_mon * 2.8 or count <= 10:
+                base_label = "VIP Elite — Strategic Outlier"
             elif s_mon >= cohort_mon * 1.35 and s_rec <= cohort_rec * 1.05:
                 base_label = "VIP Champions"
             elif s_mon >= cohort_mon * 1.15 and s_rec > cohort_rec:

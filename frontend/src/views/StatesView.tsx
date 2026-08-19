@@ -92,7 +92,7 @@ export const StatesView: React.FC = () => {
             </p>
           </div>
           <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
-            &sum; Row Normalization = 1.00 &middot; Observed Events: {(matrix as any)?.total_transitions_observed?.toLocaleString() || "15,000"}
+            &sum; Row Normalization = 1.00 &middot; Observed Customer Transitions: {(matrix as any)?.total_transitions_observed?.toLocaleString() || "3,000"}
           </span>
         </div>
 

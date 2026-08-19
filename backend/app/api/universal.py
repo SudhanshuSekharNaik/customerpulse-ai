@@ -214,10 +214,10 @@ PRESETS = [
         "name": "Amazon E-Commerce Benchmark",
         "filename": "amazon_ecommerce_demo.csv",
         "row_count": 12000,
-        "customer_count": 1384,
+        "customer_count": 3000,
         "domain": "E-Commerce & Retail",
         "features": ["order_id", "customer_id", "order_date", "product_name", "category", "sales_amount_inr", "city", "rating"],
-        "description": "12,000 order transactions across Electronics, Fashion, Home, and Beauty with RFM and TreeSHAP churn drivers.",
+        "description": "12,000 order transactions across 3,000 unique customers (cust_1 to cust_3000) with RFM, TreeSHAP, and Causal Uplift.",
     },
     {
         "preset_id": "FLIPKART",

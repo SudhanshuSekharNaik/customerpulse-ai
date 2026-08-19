@@ -30,6 +30,22 @@ export interface ExecutiveOverview {
   portfolio_actionable_uplift_inr?: number;
 }
 
+export interface DatasetMeta {
+  customer_count: number;
+  event_count: number;
+  order_count: number;
+  dataset_name: string;
+  total_revenue: number;
+  status: string;
+  data_lineage: {
+    total_customers: number;
+    total_events: number;
+    total_orders: number;
+    coverage_pct: number;
+    customer_id_format: string;
+  };
+}
+
 export interface CustomerFeature {
   recency_days: number;
   frequency_7d: number;

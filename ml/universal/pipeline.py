@@ -459,13 +459,13 @@ class UniversalPipelineRunner:
                     X_tr = tr_df[CHURN_FEATURE_COLS].fillna(0.0).values
                     y_tr = tr_df["churn_target"].values
 
-                    clf_base = lgb.LGBMClassifier(n_estimators=45, max_depth=3, learning_rate=0.08, random_state=42, verbose=-1)
+                    clf_base = lgb.LGBMClassifier(n_estimators=45, max_depth=3, learning_rate=0.08, colsample_bytree=0.75, min_child_samples=5, random_state=42, verbose=-1)
                     clf_base.fit(X_tr, y_tr)
                     raw_probs = clf_base.predict_proba(X_tr)[:, 1]
                     raw_brier = float(brier_score_loss(y_tr, raw_probs))
 
                     # Calibrate with Platt scaling (Sigmoid) using 3-fold CV
-                    clf = CalibratedClassifierCV(estimator=lgb.LGBMClassifier(n_estimators=45, max_depth=3, learning_rate=0.08, random_state=42, verbose=-1), method="sigmoid", cv=3)
+                    clf = CalibratedClassifierCV(estimator=lgb.LGBMClassifier(n_estimators=45, max_depth=3, learning_rate=0.08, colsample_bytree=0.75, min_child_samples=5, random_state=42, verbose=-1), method="sigmoid", cv=3)
                     clf.fit(X_tr, y_tr)
 
                     tr_probs = clf.predict_proba(X_tr)[:, 1]

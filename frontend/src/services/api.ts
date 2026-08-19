@@ -12,6 +12,7 @@ import {
   AgentResponse,
   TrafficForecastReport,
   CustomerNextAction,
+  DatasetMeta,
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -31,6 +32,8 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   getHealth: () => fetchJson<{ status: string; total_customers: number; trained_models: number }>(`${API_BASE}/health`),
+
+  getDatasetMeta: () => fetchJson<DatasetMeta>(`${API_BASE}/analytics/dataset-meta`),
 
   getAnalyticsOverview: () =>
     fetchJson<{
