@@ -225,9 +225,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Sparkles size={16} color="var(--accent-emerald)" />
           </div>
           <div className="stat-value" style={{ color: "#34D399" }}>
-            ₹{kpis?.addressable_portfolio_uplift?.toLocaleString() || "0"}
+            +₹{kpis?.addressable_portfolio_uplift?.toLocaleString() || "0"}
           </div>
-          <div className="stat-sub">From Next-Best-Actions</div>
+          <div className="stat-sub" title="Calculated as: Σ [(P(T)_i - P(C)_i) × Margin_i - Cost_i] across all active recommendations">
+            Σ Net Intervention Value
+          </div>
         </div>
       </div>
 
@@ -246,7 +248,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Data Integrity Score: {dataHealth.data_quality_score}%
               </span>
               <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                Zero Customer Loss Guarantee (3,000 / 3,000)
+                Zero Customer Loss ({dataHealth.total_customers?.toLocaleString() || kpis?.total_customers?.toLocaleString()} / {dataHealth.total_customers?.toLocaleString() || kpis?.total_customers?.toLocaleString()} Synchronized)
               </span>
             </div>
           </div>

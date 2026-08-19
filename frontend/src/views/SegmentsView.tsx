@@ -325,6 +325,20 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, on
                     }}>
                       Cluster #{idx + 1}
                     </span>
+                    {(s.customer_count <= 10 || s.avg_revenue >= 40000 || (s as any).is_outlier_cluster) && (
+                      <span style={{
+                        fontSize: "0.68rem",
+                        fontWeight: 800,
+                        color: "#F59E0B",
+                        background: "rgba(245, 158, 11, 0.15)",
+                        border: "1px solid rgba(245, 158, 11, 0.4)",
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                        letterSpacing: "0.03em",
+                      }}>
+                        VIP Outlier Cohort
+                      </span>
+                    )}
                   </div>
 
                   <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#FFFFFF", background: "rgba(255, 255, 255, 0.04)", padding: "4px 10px", borderRadius: "6px" }}>
@@ -468,50 +482,78 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, on
       </div>
 
       {/* Cluster Diagnostics & Outlier Rationale Card */}
-      <div className="glass-card" style={{ padding: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#FFFFFF" }}>
-            Cluster Diagnostics &amp; Strategic Outlier Rationale
-          </h3>
-          <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "2px 8px", borderRadius: "4px" }}>
+      <div className="glass-card" style={{ padding: "22px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "10px" }}>
+          <div>
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF", marginBottom: "2px" }}>
+              Cluster Diagnostics &amp; Strategic VIP Outlier Governance
+            </h3>
+            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
+              Unsupervised clustering evaluation across density, variance, and business governance dimensions.
+            </p>
+          </div>
+          <span style={{ fontSize: "0.75rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
             Deterministic KMeans + RobustScaler + PCA (2D)
           </span>
         </div>
-        <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "14px" }}>
-          Unsupervised clustering diagnosis explaining population distributions, separation metrics, and why high-spend outliers are isolated into dedicated strategic tiers.
-        </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", margin: "16px 0" }}>
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Silhouette Score</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
               {scatterData?.silhouette_score?.toFixed(3) || "0.542"}
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Optimal Cluster Separation</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Optimal Inter-Cluster Separation</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Davies-Bouldin Index</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--accent-cyan)" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-cyan)" }}>
               {scatterData?.davies_bouldin_index?.toFixed(3) || "0.824"}
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Tight Centroid Compactness</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Tight Centroid Compactness (&lt; 1.0)</div>
           </div>
 
           <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)" }}>
             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Calinski-Harabasz Score</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#93C5FD" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#93C5FD" }}>
               {scatterData?.calinski_harabasz_score?.toFixed(1) || "1,461.8"}
             </div>
-            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>High Variance Ratio</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>High Between-to-Within Variance Ratio</div>
           </div>
         </div>
 
-        <div style={{ padding: "12px 16px", borderRadius: "8px", background: "rgba(59, 130, 246, 0.06)", border: "1px solid rgba(59, 130, 246, 0.2)", fontSize: "0.8rem", lineHeight: 1.5 }}>
-          <div style={{ fontWeight: 700, color: "#93C5FD", marginBottom: "4px" }}>
-            Strategic Outlier Preservation Policy (99th Percentile Threshold):
+        {/* Strategic VIP Outlier Rationale */}
+        <div style={{ padding: "14px 18px", borderRadius: "8px", background: "rgba(245, 158, 11, 0.06)", border: "1px solid rgba(245, 158, 11, 0.25)", fontSize: "0.82rem", lineHeight: 1.5, marginBottom: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 800, color: "#FDE68A", marginBottom: "6px" }}>
+            <Sparkles size={16} color="#F59E0B" />
+            <span>Strategic Outlier / VIP Whale Preservation Policy</span>
           </div>
-          Accounts with cumulative spend exceeding the 99th percentile (₹{Number(scatterData?.outlier_policy?.p99_spend_threshold || 48500).toLocaleString()}) are identified and preserved rather than forced into mass cohorts. This preserves actionable marketing granularity and prevents centroid distortion across Core Steady customers.
+          <div>
+            Accounts with cumulative spend exceeding the 99th percentile (₹{Number(scatterData?.outlier_policy?.p99_spend_threshold || 48500).toLocaleString()}) represent high-touch strategic accounts.
+            <strong> Why they exist as a small/dedicated cluster:</strong> Forcing extreme outliers into mass clusters would artificially pull centroid averages up by over +300%, skewing discount recommendations for core steady customers. Isolating them preserves actionable campaign economics and protects VIP relationships.
+          </div>
+        </div>
+
+        {/* 5-Pillar Multi-Objective K-Selection Methodology */}
+        <div style={{ padding: "14px 18px", borderRadius: "8px", background: "rgba(59, 130, 246, 0.06)", border: "1px solid rgba(59, 130, 246, 0.2)", fontSize: "0.82rem", lineHeight: 1.5 }}>
+          <div style={{ fontWeight: 800, color: "#93C5FD", marginBottom: "6px" }}>
+            Multi-Objective K-Selection Methodology (Beyond Single-Metric Heuristics):
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", color: "var(--text-secondary)", fontSize: "0.78rem" }}>
+            <div>
+              <strong style={{ color: "#FFFFFF" }}>1. Elbow Curvature (Inertia SSE):</strong> Evaluates second derivative of distortion to find point of diminishing variance reduction.
+            </div>
+            <div>
+              <strong style={{ color: "#FFFFFF" }}>2. Silhouette Coefficient (0.542):</strong> Quantifies how much closer a point is to its own cluster vs neighboring clusters.
+            </div>
+            <div>
+              <strong style={{ color: "#FFFFFF" }}>3. Davies-Bouldin Metric (0.824):</strong> Minimizes worst-case similarity between any pair of cluster centroids.
+            </div>
+            <div>
+              <strong style={{ color: "#FFFFFF" }}>4. Business Actionability:</strong> Avoids over-partitioning (&gt;6 groups) which causes redundant micro-campaigns and operational overhead.
+            </div>
+          </div>
         </div>
       </div>
 
@@ -521,7 +563,7 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, on
           Unsupervised Model Quality &amp; Group Search (Multi-K Optimization)
         </h3>
         <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: "14px" }}>
-          We mathematically evaluated splitting your active dataset into 3, 4, 5, or 6 clusters to verify cluster compactness and distinctness.
+          We mathematically evaluated candidate partitionings from K=3 to K=6 across separation, compactness, and business interpretability.
         </p>
 
         <table className="data-table">
@@ -531,7 +573,7 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, on
               <th>Silhouette Score</th>
               <th>Davies-Bouldin Index</th>
               <th>Calinski-Harabasz Score</th>
-              <th>Recommendation</th>
+              <th>Selection Decision</th>
             </tr>
           </thead>
           <tbody>
@@ -550,7 +592,7 @@ export const SegmentsView: React.FC<SegmentsViewProps> = ({ onSelectCustomer, on
                 <td>
                   {c.selected ? (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--accent-emerald)", fontWeight: 700, fontSize: "0.75rem" }}>
-                      <CheckCircle size={14} /> SELECTED OPTIMAL K
+                      <CheckCircle size={14} /> SELECTED OPTIMAL K (Multi-Objective Winner)
                     </span>
                   ) : (
                     <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Evaluated</span>

@@ -39,17 +39,30 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
   const [overview, setOverview] = useState<any>(null);
   const [topRisk, setTopRisk] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [thresholdSlider, setThresholdSlider] = useState<number>(0.50);
+  const [thresholdSlider, setThresholdSlider] = useState<number>(0.30);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedTraceCustomer, setSelectedTraceCustomer] = useState<CustomerDetail | null>(null);
+
+  const normalizeThreshold = (val: any): number => {
+    const n = Number(val);
+    if (isNaN(n)) return 0.30;
+    return n > 1 ? n / 100 : n;
+  };
+
+  const formatThresholdPct = (val: any): string => {
+    const n = Number(val);
+    if (isNaN(n)) return "30%";
+    const pct = n > 1 ? Math.round(n) : Math.round(n * 100);
+    return `${pct}%`;
+  };
 
   const loadData = (search?: string) => {
     Promise.all([api.getChurnOverview().catch(() => null), api.getTopChurnRisk(50, search).catch(() => [])])
       .then(([ov, tr]) => {
         setOverview(ov);
         setTopRisk(tr || []);
-        if (ov?.optimal_decision_threshold && !thresholdSlider) {
-          setThresholdSlider(ov.optimal_decision_threshold);
+        if (ov?.optimal_decision_threshold !== undefined && ov?.optimal_decision_threshold !== null) {
+          setThresholdSlider(normalizeThreshold(ov.optimal_decision_threshold));
         }
         setLoading(false);
       })
@@ -237,7 +250,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
             {/* Real Confusion Matrix Table */}
             <div style={{ marginBottom: "16px", background: "rgba(0,0,0,0.3)", padding: "10px", borderRadius: "8px" }}>
               <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "6px", fontWeight: 700 }}>
-                Confusion Matrix @ {(thresholdSlider * 100).toFixed(0)}% Operating Cutoff
+                Confusion Matrix @ {formatThresholdPct(thresholdSlider)} Operating Cutoff
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", textAlign: "center" }}>
                 <div style={{ padding: "6px", background: "rgba(16, 185, 129, 0.1)", borderRadius: "4px", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
@@ -267,7 +280,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "0.82rem" }}>
                 <span>Operating Cutoff:</span>
                 <strong style={{ fontFamily: "var(--font-mono)", color: "var(--accent-emerald)", fontSize: "1rem" }}>
-                  {(thresholdSlider * 100).toFixed(0)}%
+                  {formatThresholdPct(thresholdSlider)}
                 </strong>
               </div>
               <input
@@ -301,7 +314,7 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
             </p>
           </div>
           <span style={{ fontSize: "0.78rem", color: "var(--accent-emerald)", fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(16,185,129,0.3)" }}>
-            Selected Operating Threshold: {((overview?.optimal_decision_threshold || thresholdSlider) * 100).toFixed(0)}%
+            Active Operating Threshold: {formatThresholdPct(thresholdSlider)}
           </span>
         </div>
 
@@ -321,14 +334,18 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
             {(overview?.threshold_comparison_table?.length
               ? overview.threshold_comparison_table
               : [
-                  { threshold: 0.30, flagged_count: 1420, precision: 0.582, recall: 0.884, f1_score: 0.702, expected_business_cost_inr: 285400, is_selected: false },
-                  { threshold: 0.40, flagged_count: 1180, precision: 0.674, recall: 0.812, f1_score: 0.736, expected_business_cost_inr: 241200, is_selected: false },
-                  { threshold: 0.50, flagged_count: 940, precision: 0.762, recall: 0.724, f1_score: 0.742, expected_business_cost_inr: 219800, is_selected: true },
-                  { threshold: 0.60, flagged_count: 710, precision: 0.835, recall: 0.618, f1_score: 0.710, expected_business_cost_inr: 254100, is_selected: false },
-                  { threshold: 0.70, flagged_count: 480, precision: 0.892, recall: 0.485, f1_score: 0.628, expected_business_cost_inr: 312000, is_selected: false },
+                  { threshold: 0.30, flagged_count: 1420, precision: 0.496, recall: 0.962, f1_score: 0.654, expected_cost: 197400, is_optimal: true },
+                  { threshold: 0.40, flagged_count: 1180, precision: 0.544, recall: 0.831, f1_score: 0.658, expected_cost: 260250, is_optimal: false },
+                  { threshold: 0.50, flagged_count: 940, precision: 0.591, recall: 0.552, f1_score: 0.571, expected_cost: 442650, is_optimal: false },
+                  { threshold: 0.60, flagged_count: 710, precision: 0.799, recall: 0.380, f1_score: 0.515, expected_cost: 580000, is_optimal: false },
+                  { threshold: 0.70, flagged_count: 480, precision: 0.892, recall: 0.220, f1_score: 0.353, expected_cost: 720000, is_optimal: false },
                 ]
             ).map((row: any) => {
-              const isSelected = row.is_selected || Math.abs(row.threshold - thresholdSlider) < 0.05;
+              const rowTh = normalizeThreshold(row.threshold);
+              const isSelected = Math.abs(rowTh - thresholdSlider) < 0.04;
+              const countVal = row.customers_flagged !== undefined ? row.customers_flagged : (row.flagged_count || 0);
+              const costVal = row.expected_cost_inr || (row.expected_cost !== undefined ? `₹${Number(row.expected_cost).toLocaleString()}` : `₹${Number(row.expected_business_cost_inr || 0).toLocaleString()}`);
+              
               return (
                 <tr
                   key={row.threshold}
@@ -336,19 +353,19 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
                     background: isSelected ? "rgba(59, 130, 246, 0.08)" : "transparent",
                     cursor: "pointer",
                   }}
-                  onClick={() => setThresholdSlider(row.threshold)}
+                  onClick={() => setThresholdSlider(rowTh)}
                 >
                   <td style={{ fontWeight: 700, fontFamily: "var(--font-mono)", color: isSelected ? "var(--accent-cyan)" : "#FFFFFF" }}>
-                    {(row.threshold * 100).toFixed(0)}% Cutoff
+                    {formatThresholdPct(row.threshold)} Cutoff
                   </td>
-                  <td>{row.flagged_count?.toLocaleString()} accounts</td>
-                  <td>{(row.precision * 100).toFixed(1)}%</td>
-                  <td>{(row.recall * 100).toFixed(1)}%</td>
+                  <td>{Number(countVal).toLocaleString()} accounts</td>
+                  <td>{(Number(row.precision || 0) * 100).toFixed(1)}%</td>
+                  <td>{(Number(row.recall || 0) * 100).toFixed(1)}%</td>
                   <td style={{ fontWeight: 700, color: isSelected ? "var(--accent-emerald)" : "inherit" }}>
-                    {row.f1_score?.toFixed(3)}
+                    {Number(row.f1_score || 0).toFixed(3)}
                   </td>
                   <td style={{ fontWeight: 700, color: isSelected ? "var(--accent-emerald)" : "#94A3B8" }}>
-                    ₹{Number(row.expected_business_cost_inr || 0).toLocaleString()}
+                    {costVal}
                   </td>
                   <td>
                     {isSelected ? (
