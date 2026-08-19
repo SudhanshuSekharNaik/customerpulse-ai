@@ -115,11 +115,14 @@ export const PredictionsView: React.FC<PredictionsViewProps> = ({ onSelectCustom
     ? Number(overview.brier_score).toFixed(4)
     : "0.1420";
 
-  const cm = overview?.confusion_matrix || [[335, 4], [264, 89]];
-  const tn = cm[0]?.[0] || 335;
-  const fp = cm[0]?.[1] || 4;
-  const fn = cm[1]?.[0] || 264;
-  const tp = cm[1]?.[1] || 89;
+  const matchedThRow = overview?.threshold_comparison_table?.find(
+    (r: any) => Math.abs(normalizeThreshold(r.threshold) - thresholdSlider) < 0.05
+  );
+  const cmFallback = overview?.confusion_matrix || [[311, 1022], [26, 1276]];
+  const tn = matchedThRow?.tn ?? cmFallback[0]?.[0] ?? 311;
+  const fp = matchedThRow?.fp ?? cmFallback[0]?.[1] ?? 1022;
+  const fn = matchedThRow?.fn ?? cmFallback[1]?.[0] ?? 26;
+  const tp = matchedThRow?.tp ?? cmFallback[1]?.[1] ?? 1276;
 
   const calibrationData = overview?.calibration_deciles || [
     { bin: "0–10%", predicted_mean: 0.052, actual_churn_rate: 0.061, sample_count: 142 },

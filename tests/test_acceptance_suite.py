@@ -145,3 +145,21 @@ def test_15_churn_prediction_variation_and_bounds(db):
     assert len(valid_probs) >= 2900
     assert len(set(valid_probs)) > 50, f"Predictions must have high entropy, got {len(set(valid_probs))} unique values"
     assert all(0.0 <= p <= 1.0 for p in valid_probs)
+
+def test_16_threshold_alignment_and_single_source_of_truth(db):
+    """AC 16: Verify single canonical operating threshold across overview, metadata, and comparisons."""
+    overview = PredictionService.get_churn_predictions_overview(db)
+    opt_th = overview["optimal_decision_threshold"]
+    
+    # 1. Operating threshold is float in [0.0, 1.0]
+    assert 0.0 <= opt_th <= 1.0
+    
+    # 2. Optimal row in threshold comparison table matches operating threshold exactly
+    optimal_rows = [r for r in overview["threshold_comparison_table"] if r.get("is_optimal")]
+    assert len(optimal_rows) == 1
+    assert abs(optimal_rows[0]["threshold_fraction"] - opt_th) < 1e-4
+    
+    # 3. Model run / metadata agrees with operating threshold
+    sample_pred = db.query(Prediction).filter(Prediction.model_type == "churn").first()
+    assert sample_pred is not None
+    assert abs(sample_pred.decision_threshold - opt_th) < 1e-4
