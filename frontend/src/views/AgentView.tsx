@@ -24,12 +24,12 @@ export const AgentView: React.FC = () => {
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
 
   const SUGGESTED_QUERIES = [
-    "What is the current state and churn risk for customer cust_1?",
+    "Why is cust_1 at risk?",
+    "What should we do with cust_1?",
+    "What is the revenue of the top 5 customers?",
+    "DROP TABLE customers;",
+    "What about cust_999999?",
     "Why are high-value customers in the DECLINING state at risk?",
-    "Which customer segment has the highest average revenue and cart conversion?",
-    "What are the recommended actions for at-risk customers this week?",
-    "SELECT customer_id, total_revenue, total_orders FROM customers ORDER BY total_revenue DESC LIMIT 5;",
-    "DROP TABLE customers;", // Test SQL safety
   ];
 
   const handleSend = (textToSend?: string) => {
@@ -50,9 +50,9 @@ export const AgentView: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-run initial agent audit so actual 8-step execution trace is visible on load
+    // Auto-run initial agent query so execution trace is visible on load
     if (chatHistory.length === 0) {
-      handleSend("What is the current state and churn risk for customer cust_1?");
+      handleSend("Why is cust_1 at risk and what should we do?");
     }
   }, []);
 
@@ -234,39 +234,62 @@ export const AgentView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Structured 8-Step Execution Trace */}
-                {(item.response as any).agent_trace && (
+                {/* Structured Autonomous Agent Execution Trace */}
+                {(item.response as any).agent_trace && (item.response as any).agent_trace.length > 0 && (
                   <div style={{ marginTop: "16px", borderTop: "1px solid var(--border-subtle)", paddingTop: "12px" }}>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Terminal size={14} color="var(--accent-cyan)" />
-                      <span>8-Step Agent Execution Pipeline Trace</span>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Terminal size={14} color="var(--accent-cyan)" />
+                        <span>Autonomous Agent Execution Pipeline Trace</span>
+                      </div>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--accent-cyan)" }}>
+                        {(item.response as any).agent_trace.length} Execution Steps &middot; {item.response.duration_seconds}s
+                      </span>
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "6px" }}>
-                      {(item.response as any).agent_trace.map((st: any) => (
-                        <div
-                          key={st.step_number}
-                          style={{
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            background: "rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 255, 255, 0.05)",
-                            fontSize: "0.75rem",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-blue)", fontSize: "0.7rem" }}>
-                            0{st.step_number}
-                          </span>
-                          <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            <span style={{ fontWeight: 700, color: "#FFFFFF" }}>{st.title}: </span>
-                            <span style={{ color: "var(--text-secondary)" }}>{st.details}</span>
+                      {(item.response as any).agent_trace.map((st: any) => {
+                        const isHalted = st.status === "HALTED" || st.status === "FAILED";
+                        const isBlocked = st.status === "BLOCKED";
+                        const badgeBg = isBlocked ? "rgba(239, 68, 68, 0.15)" : isHalted ? "rgba(245, 158, 11, 0.15)" : "rgba(16, 185, 129, 0.15)";
+                        const badgeColor = isBlocked ? "#EF4444" : isHalted ? "#F59E0B" : "#10B981";
+
+                        return (
+                          <div
+                            key={st.step_number}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              background: "rgba(0, 0, 0, 0.3)",
+                              border: `1px solid ${isBlocked ? "rgba(239, 68, 68, 0.3)" : isHalted ? "rgba(245, 158, 11, 0.3)" : "rgba(255, 255, 255, 0.05)"}`,
+                              fontSize: "0.75rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-blue)", fontSize: "0.7rem" }}>
+                              0{st.step_number}
+                            </span>
+                            <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <div style={{ fontWeight: 700, color: "#FFFFFF", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span>{st.title}</span>
+                                {st.latency_ms !== undefined && (
+                                  <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                                    {st.latency_ms}ms
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ color: "var(--text-secondary)", fontSize: "0.7rem", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {st.details}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: "0.65rem", fontWeight: 700, background: badgeBg, color: badgeColor, padding: "2px 6px", borderRadius: "4px" }}>
+                              {st.status}
+                            </span>
                           </div>
-                          <CheckCircle2 size={12} color="var(--accent-emerald)" />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -100,14 +100,14 @@ def test_10_sql_safe_read_only_select():
     assert res["row_count"] == 5
 
 def test_11_agent_budget_and_conditional_trace():
-    """AC 11: Agent tool budget <= 8, 8-step execution trace on valid customer, and 1-tool early exit on invalid customer."""
+    """AC 11: Agent tool budget <= 8, dynamic execution trace on valid customer, and 1-tool early exit on invalid customer."""
     agent = CustomerPulseAnalystAgent(max_tool_calls=8)
     
-    # Valid customer: executes full analysis chain
-    res_valid = agent.answer_query("What is the churn risk for cust_1?", session_id="test_valid")
+    # Valid customer: executes analysis chain
+    res_valid = agent.answer_query("Why is cust_1 at risk and what should we do?", session_id="test_valid")
     assert res_valid["tools_used_count"] <= 8
     assert res_valid["tools_used_count"] >= 3
-    assert len(res_valid["agent_trace"]) == 8
+    assert len(res_valid["agent_trace"]) >= 5
     assert "cust_1" in res_valid["observed_data"]
     
     # Invalid customer: halts immediately after get_customer_360 (0 wasted tools)
@@ -245,5 +245,64 @@ def test_18_transparent_expected_value_math(db):
     overview = get_executive_overview(db)
     total_impact = sum(r.expected_impact for r in recs if r.expected_impact > 0)
     assert abs(overview["addressable_portfolio_uplift"] - round(float(total_impact), 2)) < 0.1
+
+
+def test_19_ai_analyst_execution_trace_and_reliability():
+    """AC 19: AI Analyst Execution Trace, Conditional Routing & Agent Reliability."""
+    from ai.agent import CustomerPulseAnalystAgent
+
+    agent = CustomerPulseAnalystAgent(max_tool_calls=8)
+
+    # TEST 1: Diagnostic Query ("Why is cust_1 at risk?")
+    # Expected: Customer 360, Churn, SHAP, Lifecycle. No uplift / recommendation tools.
+    r1 = agent.answer_query("Why is cust_1 at risk?")
+    tools1 = [tc["tool_name"] for tc in r1["tool_calls"]]
+    assert "get_customer_360" in tools1
+    assert "get_churn_analysis" in tools1
+    assert "get_customer_recommendation" not in tools1, "Diagnostic query should not invoke recommendation"
+    assert "get_customer_uplift" not in tools1, "Diagnostic query should not invoke causal uplift"
+    assert len(r1["tool_calls"]) <= 8
+    assert len(r1["agent_trace"]) >= 3
+    assert "cust_1" in r1["observed_data"]
+    assert "LightGBM" in r1["model_prediction"] or "Churn" in r1["model_prediction"]
+
+    # TEST 2: Prescriptive Query ("What should we do with cust_1?")
+    # Expected: Customer 360, Churn, SHAP, Lifecycle, Uplift, Recommendation.
+    r2 = agent.answer_query("What should we do with cust_1?")
+    tools2 = [tc["tool_name"] for tc in r2["tool_calls"]]
+    assert "get_customer_360" in tools2
+    assert "get_churn_analysis" in tools2
+    assert "get_customer_uplift" in tools2
+    assert "get_customer_recommendation" in tools2
+    assert len(r2["tool_calls"]) <= 8
+    assert len(r2["agent_trace"]) >= 5
+    assert "Recommended Action:" in r2["recommendation"]
+    assert "Expected Net Value" in r2["recommendation"]
+
+    # TEST 3: SQL Aggregation Query ("What is the revenue of the top 5 customers?")
+    # Expected: SQL only.
+    r3 = agent.answer_query("What is the revenue of the top 5 customers?")
+    tools3 = [tc["tool_name"] for tc in r3["tool_calls"]]
+    assert tools3 == ["read_only_sql"], "Aggregate revenue query must only invoke read_only_sql"
+    assert len(r3["tool_calls"]) == 1
+    assert r3["is_security_rejected"] is False
+    assert "Top Customer Accounts" in r3["observed_data"]
+
+    # TEST 4: Destructive SQL Protection ("DROP TABLE customers;")
+    # Expected: Rejected before SQL execution.
+    r4 = agent.answer_query("DROP TABLE customers;")
+    assert r4["is_security_rejected"] is True
+    assert "SECURITY POLICY: Query rejected" in r4["observed_data"]
+    assert r4["agent_trace"][0]["status"] == "BLOCKED"
+
+    # TEST 5: Non-Existent Customer Guardrail ("What about cust_999999?")
+    # Expected: Customer not found. Downstream tools halted.
+    r5 = agent.answer_query("What about cust_999999?")
+    tools5 = [tc["tool_name"] for tc in r5["tool_calls"]]
+    assert tools5 == ["get_customer_360"], "Missing customer query must halt after get_customer_360"
+    assert len(r5["tool_calls"]) == 1
+    assert "not found" in r5["observed_data"].lower()
+    assert any(st["status"] in ["HALTED", "FAILED"] for st in r5["agent_trace"])
+
 
 
